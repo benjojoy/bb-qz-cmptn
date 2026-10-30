@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bible Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+--bg: #f8fafc;
+--card: #ffffff;
+--text: #0f172a;
+--muted: #64748b;
+--primary: #4f46e5;
+--primary-hover: #4338ca;
+--border: #e2e8f0;
+--correct: #16a34a;
+--wrong: #dc2626;
+--radius: 14px;
+}
+
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+font-family: 'Plus Jakarta Sans', 'Manjari', sans-serif;
+background-color: var(--bg);
+color: var(--text);
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+padding: 16px;
+}
+
+
+.container {
+width: 100%;
+max-width: 640px;
+background: var(--card);
+border-radius: var(--radius);
+box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+border: 1px solid var(--border);
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
+
+
+.progress-track {
+width: 100%;
+height: 6px;
+background: #e2e8f0;
+}
+.progress-bar {
+height: 100%;
+background: var(--primary);
+width: 0%;
+transition: width 0.3s ease;
+}
+
+
+.header {
+padding: 16px 24px;
+border-bottom: 1px solid var(--border);
+display: flex;
+justify-content: space-between;
+align-items: center;
+background: #fafafa;
+}
+
+
+.timer-badge {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+font-size: 0.85rem;
+font-weight: 700;
+padding: 4px 10px;
+border-radius: 20px;
+background: #fee2e2;
+color: #991b1b;
+}
+
+
+.content { padding: 28px 24px; }
+.hidden { display: none !important; }
+
+
+h1 { font-size: 1.4rem; margin-bottom: 8px; }
+p.desc { font-size: 0.95rem; color: var(--muted); margin-bottom: 24px; line-height: 1.5; white-space: pre-line; }
+
+
+.input-group { margin-bottom: 20px; }
+label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; }
+input[type="text"] {
+width: 100%;
+padding: 12px 16px;
+border: 1px solid var(--border);
+border-radius: 8px;
+font-size: 1rem;
+font-family: inherit;
+outline: none;
+}
+input[type="text"]:focus { border-color: var(--primary); }
+
+
+.q-meta {
+font-size: 0.85rem;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+color: var(--primary);
+margin-bottom: 8px;
+}
+
+
+.question-title {
+font-size: 1.15rem;
+font-weight: 700;
+line-height: 1.6;
+margin-bottom: 20px;
+}
+
+
+.options-list { display: flex; flex-direction: column; gap: 10px; }
+.option-btn {
+width: 100%;
+text-align: left;
+padding: 14px 18px;
+background: #fff;
+border: 1.5px solid var(--border);
+border-radius: 10px;
+font-size: 1rem;
+font-family: inherit;
+cursor: pointer;
+transition: all 0.2s ease;
+line-height: 1.5;
+}
+.option-btn:hover { border-color: var(--primary); background: #f5f3ff; }
+.option-btn.selected { border-color: var(--primary); background: #e0e7ff; font-weight: 600; }
+
+
+.btn {
+display: inline-flex;
+justify-content: center;
+align-items: center;
+padding: 14px 20px;
+border-radius: 10px;
+font-size: 1rem;
+font-weight: 600;
+cursor: pointer;
+border: none;
+background: var(--primary);
+color: #fff;
+width: 100%;
+margin-top: 24px;
+}
+.btn:hover { background: var(--primary-hover); }
+.btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+
+.score-card {
+text-align: center;
+padding: 16px 0;
+border-bottom: 1px solid var(--border);
+margin-bottom: 20px;
+}
+.score-number { font-size: 3rem; font-weight: 800; color: var(--primary); margin: 6px 0; }
+.review-item {
+padding: 14px 16px;
+border-radius: 10px;
+background: #f8fafc;
+border: 1px solid var(--border);
+margin-bottom: 12px;
+}
+.review-item.pass { border-left: 4px solid var(--correct); }
+.review-item.fail { border-left: 4px solid var(--wrong); }
+.feedback-box {
+margin-top: 8px;
+padding: 8px 12px;
+background: #fff;
+border-radius: 6px;
+font-size: 0.9rem;
+color: var(--muted);
+border: 1px dashed var(--border);
+}
+</style>
+</head>
+<body>
+
+
+<div class="container">
+<div class="progress-track">
+<div class="progress-bar" id="progressBar"></div>
+</div>
+
+
+<div class="header">
+<span id="progressText" style="font-size: 0.9rem; font-weight: 600; color: var(--muted);">Connecting...</span>
+<span id="timerBadge" class="timer-badge hidden">⏳ <span id="timeDisplay">00:00</span></span>
+</div>
+
+
+<!-- Screen 1: Registration -->
+<div class="content" id="startScreen">
+<h1 id="quizTitle">Bible Quiz</h1>
+<p class="desc" id="quizDesc">Loading quiz settings and questions from Google Sheets...</p>
+
+
+<div class="input-group">
+<label for="nameInput">Full Name / പേര് *</label>
+<input type="text" id="nameInput" placeholder="Enter your full name">
+</div>
+
+
+<div class="input-group hidden" id="phoneGroup">
+<label for="phoneInput">Phone Number / ഫോൺ നമ്പർ *</label>
+<input type="text" id="phoneInput" placeholder="Enter your phone number">
+</div>
+
+
+<button class="btn" id="startBtn" disabled>Start Quiz</button>
+</div>
+
+
+<!-- Screen 2: Question View -->
+<div class="content hidden" id="quizScreen">
+<div class="q-meta" id="qMeta">Question 1</div>
+<div class="question-title" id="qTitle">...</div>
+<div class="options-list" id="optionsContainer"></div>
+<button class="btn" id="nextBtn" disabled>Next Question</button>
+</div>
+
+
+<!-- Screen 3: Results & Explanations -->
+<div class="content hidden" id="resultScreen">
+<div class="score-card">
+<h2>Quiz Completed!</h2>
+<p id="participantName" style="color: var(--muted); margin-top: 4px;"></p>
+<div class="score-number" id="scoreValue">0 / 0</div>
+<p id="scorePercent" style="font-weight: 600;"></p>
+</div>
+<h3 style="margin-bottom: 14px; font-size: 1.1rem;">Review Answers</h3>
+<div id="reviewContainer"></div>
+</div>
+</div>
+
+
+<script>
+const SPREADSHEET_ID = "1HgFUzf11pVn8W7WK-6PJ_22QnhSXMAEJ6ERz5OuMqVo";
+
+
+let settings = {};
+let questions = [];
+let colIndex = { id: 0, book: 1, category: 2, type: 3, question: 4, optA: 5, optB: 6, optC: 7, optD: 8, answer: 9, diff: 10, ref: 11, exp: 12 };
+let currentIndex = 0;
+let userResponses = [];
+let timerInterval = null;
+let timeRemaining = 0;
+
+
+// JSONP Loader with headers=0 to prevent type-guessing and header eating
+function fetchSheetData(sheetName) {
+return new Promise((resolve, reject) => {
+const callbackName = 'gviz_cb_' + Math.random().toString(36).substring(2, 9);
+const script = document.createElement('script');
+
+
+window[callbackName] = function(data) {
+delete window[callbackName];
+if (script.parentNode) script.parentNode.removeChild(script);
+
+
+if (!data || data.status === 'error') {
+reject(new Error(data?.errors?.[0]?.message || 'GVIZ Error'));
+return;
+}
+
+
+let allRows = [];
+
+
+// Check if row 1 was captured in column labels
+if (data.table.cols && data.table.cols.some(c => c.label)) {
+allRows.push(data.table.cols.map(c => c.label || ""));
+}
+
+
+// Process table rows, taking formatted string (.f) or raw value (.v)
+(data.table.rows || []).forEach(row => {
+const rowVals = (row.c || []).map(cell => {
+if (!cell) return "";
+if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+if (cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+return "";
+});
+allRows.push(rowVals);
+});
+
+
+resolve(allRows);
+};
+
+
+script.onerror = () => {
+delete window[callbackName];
+if (script.parentNode) script.parentNode.removeChild(script);
+reject(new Error('Failed to load sheet: ' + sheetName));
+};
+
+
+script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?headers=0&tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
+document.body.appendChild(script);
+});
+}
+
+
+async function init() {
+try {
+const [settingsRows, rawQuestions] = await Promise.all([
+fetchSheetData("Settings"),
+fetchSheetData("Questions")
+]);
+
+
+console.log("Raw settings data received:", settingsRows);
+
+
+// Parse Settings key-value pairs
+settings = {};
+settingsRows.forEach(r => {
+if (!r || r.length === 0) return;
+const keyCell = String(r[0] || "").trim();
+if (!keyCell) return;
+
+
+const key = keyCell.replace(/\s+/g, ' ').toLowerCase();
+
+
+// Search through the row to pick the first valid value cell
+let val = "";
+for (let i = 1; i < r.length; i++) {
+if (r[i] !== undefined && r[i] !== null && String(r[i]).trim() !== "") {
+val = String(r[i]).trim();
+break;
+}
+}
+settings[key] = val;
+});
+
+
+console.log("Parsed Settings Object:", settings);
+
+
+// Exact filter extraction
+let targetBook = (settings["book filter"] || settings["book"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
+let targetCategory = (settings["category filter"] || settings["category"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
+
+
+console.log("Target Book Filter:", targetBook);
+console.log("Target Category Filter:", targetCategory);
+
+
+// Dynamic Column Mapping from Questions sheet Header Row
+const headerRow = (rawQuestions[0] || []).map(c => String(c || "").trim().toLowerCase());
+console.log("Questions Header Row:", headerRow);
+
+
+const findIdx = (predicate, fallback) => {
+const idx = headerRow.findIndex(predicate);
+return idx !== -1 ? idx : fallback;
+};
+
+
+colIndex.id = findIdx(h => h === "id" || h === "sl no", 0);
+colIndex.book = findIdx(h => h.includes("book"), 1);
+colIndex.category = findIdx(h => h.includes("cat"), 2);
+colIndex.type = findIdx(h => h.includes("type"), 3);
+colIndex.question = findIdx(h => h.includes("question"), 4);
+colIndex.optA = findIdx(h => h.includes("opt a") || h.includes("option a") || h === "a", 5);
+colIndex.optB = findIdx(h => h.includes("opt b") || h.includes("option b") || h === "b", 6);
+colIndex.optC = findIdx(h => h.includes("opt c") || h.includes("option c") || h === "c", 7);
+colIndex.optD = findIdx(h => h.includes("opt d") || h.includes("option d") || h === "d", 8);
+colIndex.answer = findIdx(h => h.includes("answer") || h.includes("ans") || h.includes("correct"), 9);
+colIndex.diff = findIdx(h => h.includes("diff"), 10);
+colIndex.ref = findIdx(h => h.includes("ref"), 11);
+colIndex.exp = findIdx(h => h.includes("expl"), 12);
+
+
+// Filter Questions Bank (skipping row 0 which is the header)
+let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
+console.log("Total valid questions in bank:", pool.length);
+
+
+// Apply Book Filter
+if (targetBook !== "ALL" && targetBook !== "") {
+pool = pool.filter(r => {
+const val = String(r[colIndex.book] || "").replace(/\s+/g, " ").trim().toUpperCase();
+return val === targetBook;
+});
+}
+
+
+// Apply Category Filter
+if (targetCategory !== "ALL" && targetCategory !== "") {
+pool = pool.filter(r => {
+const val = String(r[colIndex.category] || "").replace(/\s+/g, " ").trim().toUpperCase();
+return val === targetCategory;
+});
+}
+
+
+console.log(`Filtered pool for [${targetBook}] & [${targetCategory}]:`, pool.length);
+
+
+if (pool.length === 0) {
+document.getElementById("progressText").innerText = "Total Questions: 0";
+document.getElementById("quizDesc").innerText = `No questions found matching Book: "${targetBook}".`;
+document.getElementById("startBtn").disabled = true;
+return;
+}
+
+
+// Quotas
+const easyCount = Number(settings["easy count"]) || 0;
+const mediumCount = Number(settings["medium count"]) || 0;
+const hardCount = Number(settings["hard count"]) || 0;
+
+
+let easy = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "EASY");
+let med = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "MEDIUM");
+let hard = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "HARD");
+
+
+shuffle(easy);
+shuffle(med);
+shuffle(hard);
+
+
+let selected = [
+...easy.slice(0, easyCount),
+...med.slice(0, mediumCount),
+...hard.slice(0, hardCount)
+];
+
+
+let targetTotal = Number(settings["number of questions"]) || (easyCount + mediumCount + hardCount);
+if (targetTotal <= 0) targetTotal = pool.length;
+targetTotal = Math.min(targetTotal, pool.length);
+
+
+// Top up strictly from the matched book pool
+if (selected.length < targetTotal) {
+const pickedSet = new Set(selected);
+let remaining = pool.filter(r => !pickedSet.has(r));
+shuffle(remaining);
+selected = selected.concat(remaining.slice(0, targetTotal - selected.length));
+}
+
+
+questions = selected;
+shuffle(questions);
+
+
+document.getElementById("quizTitle").innerText = settings["quiz title"] || "Bible Quiz";
+document.getElementById("quizDesc").innerText = settings["confirmation message"] || "Answer all questions.\nEach question carries 1 point.";
+document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
+document.getElementById("startBtn").disabled = false;
+
+
+if (String(settings["require phone"]).toUpperCase() === "TRUE") {
+document.getElementById("phoneGroup").classList.remove("hidden");
+}
+} catch (err) {
+document.getElementById("quizDesc").innerText = "Error loading quiz data: " + err.message;
+console.error(err);
+}
+}
+
+
+document.getElementById("startBtn").addEventListener("click", () => {
+const name = document.getElementById("nameInput").value.trim();
+if (!name) return alert("Please enter your name.");
+
+
+if (String(settings["require phone"]).toUpperCase() === "TRUE") {
+const phone = document.getElementById("phoneInput").value.trim();
+if (!phone) return alert("Please enter your phone number.");
+}
+
+
+document.getElementById("startScreen").classList.add("hidden");
+document.getElementById("quizScreen").classList.remove("hidden");
+
+
+const duration = Number(settings["quiz duration minutes"]) || 0;
+if (duration > 0) {
+timeRemaining = duration * 60;
+document.getElementById("timerBadge").classList.remove("hidden");
+updateTimerDisplay();
+timerInterval = setInterval(() => {
+timeRemaining--;
+updateTimerDisplay();
+if (timeRemaining <= 0) {
+clearInterval(timerInterval);
+finishQuiz();
+}
+}, 1000);
+}
+
+
+renderQuestion();
+});
+
+
+function updateTimerDisplay() {
+const m = Math.floor(timeRemaining / 60);
+const s = timeRemaining % 60;
+document.getElementById("timeDisplay").innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+
+function renderQuestion() {
+const q = questions[currentIndex];
+const type = String(q[colIndex.type] || "").trim().toUpperCase();
+const correctLetter = String(q[colIndex.answer] || "").trim().toUpperCase();
+
+
+const percent = (currentIndex / questions.length) * 100;
+document.getElementById("progressBar").style.width = `${percent}%`;
+document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
+document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''} •`;
+document.getElementById("qTitle").innerText = q[colIndex.question];
+
+
+let options = [];
+if (type === "TF") {
+options = [
+{ label: "ശരി", correct: correctLetter === "A" },
+{ label: "തെറ്റ്", correct: correctLetter === "B" }
+];
+} else {
+if (q[colIndex.optA]) options.push({ label: String(q[colIndex.optA]), correct: correctLetter === "A" });
+if (q[colIndex.optB]) options.push({ label: String(q[colIndex.optB]), correct: correctLetter === "B" });
+if (q[colIndex.optC]) options.push({ label: String(q[colIndex.optC]), correct: correctLetter === "C" });
+if (q[colIndex.optD]) options.push({ label: String(q[colIndex.optD]), correct: correctLetter === "D" });
+}
+
+
+if (String(settings["shuffle options"]).toUpperCase() === "TRUE") {
+shuffle(options);
+}
+
+
+const container = document.getElementById("optionsContainer");
+container.innerHTML = "";
+document.getElementById("nextBtn").disabled = true;
+
+
+options.forEach(opt => {
+const btn = document.createElement("button");
+btn.className = "option-btn";
+btn.innerText = opt.label;
+btn.onclick = () => {
+container.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+btn.classList.add("selected");
+document.getElementById("nextBtn").disabled = false;
+userResponses[currentIndex] = {
+question: q[colIndex.question],
+selected: opt.label,
+isCorrect: opt.correct,
+reference: q[colIndex.ref] || "",
+explanation: q[colIndex.exp] || ""
+};
+};
+container.appendChild(btn);
+});
+
+
+document.getElementById("nextBtn").innerText = (currentIndex === questions.length - 1) ? "Submit Quiz" : "Next Question";
+}
+
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+if (currentIndex < questions.length - 1) {
+currentIndex++;
+renderQuestion();
+} else {
+if (timerInterval) clearInterval(timerInterval);
+finishQuiz();
+}
+});
+
+
+function finishQuiz() {
+document.getElementById("progressBar").style.width = "100%";
+document.getElementById("quizScreen").classList.add("hidden");
+document.getElementById("timerBadge").classList.add("hidden");
+document.getElementById("resultScreen").classList.remove("hidden");
+
+
+let score = 0;
+userResponses.forEach(r => { if (r && r.isCorrect) score++; });
+
+
+document.getElementById("participantName").innerText = document.getElementById("nameInput").value.trim();
+document.getElementById("scoreValue").innerText = `${score} / ${questions.length}`;
+document.getElementById("scorePercent").innerText = `Accuracy: ${Math.round((score / questions.length) * 100)}%`;
+
+
+const review = document.getElementById("reviewContainer");
+review.innerHTML = "";
+
+
+userResponses.forEach((res, i) => {
+if (!res) return;
+const div = document.createElement("div");
+div.className = `review-item ${res.isCorrect ? 'pass' : 'fail'}`;
+div.innerHTML = `
+<div style="font-weight:700; margin-bottom: 6px;">${i + 1}. ${res.question}</div>
+<div style="font-size:0.95rem;">Your Answer: <strong>${res.selected}</strong> ${res.isCorrect ? '✅' : '❌'}</div>
+${(res.reference || res.explanation) ? `
+<div class="feedback-box">
+${res.reference ? `<div>📖 <strong>Reference:</strong> ${res.reference}</div>` : ''}
+${res.explanation ? `<div>💡 <strong>Explanation:</strong> ${res.explanation}</div>` : ''}
+</div>
+` : ''}
+`;
+review.appendChild(div);
+});
+}
+
+
+function shuffle(arr) {
+for (let i = arr.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[arr[i], arr[j]] = [arr[j], arr[i]];
+}
+return arr;
+}
+
+
+init();
+</script>
+</body>
+</html>
