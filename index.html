@@ -465,7 +465,7 @@ shuffle(questions);
 
 
 document.getElementById("quizTitle").innerText = settings["quiz title"] || "Bible Quiz";
-document.getElementById("quizDesc").innerText = settings["confirmation message"] || "Answer all questions.\nEach question carries 1 point.";
+document.getElementById("quizDesc").innerText = "Answer all questions.\nEach question carries 1 point.\nNo negative marking.";
 document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
 document.getElementById("startBtn").disabled = false;
 
@@ -602,12 +602,16 @@ document.getElementById("resultScreen").classList.remove("hidden");
 
 
 let score = 0;
-userResponses.forEach(r => { if (r && r.isCorrect) score++; });
+  userResponses.forEach(r => { if (r && r.isCorrect) score++; });
 
+  const confirmMsg = settings["confirmation message"] || "Thank you for completing the quiz!";
+  document.getElementById("participantName").innerHTML = `
+    <p style="margin-bottom: 12px; font-weight: 600;">${document.getElementById("nameInput").value.trim()}</p>
+    <p style="white-space: pre-line; color: var(--muted); font-size: 0.95rem; line-height: 1.5;">${confirmMsg}</p>
+  `;
 
-document.getElementById("participantName").innerText = document.getElementById("nameInput").value.trim();
-document.getElementById("scoreValue").innerText = `${score} / ${questions.length}`;
-document.getElementById("scorePercent").innerText = `Accuracy: ${Math.round((score / questions.length) * 100)}%`;
+  document.getElementById("scoreValue").innerText = `${score} / ${questions.length}`;
+  document.getElementById("scorePercent").innerText = `Accuracy: ${Math.round((score / questions.length) * 100)}%`;
 
 
 const review = document.getElementById("reviewContainer");
