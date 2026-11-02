@@ -76,3 +76,33 @@ function playNextQuestionSound() {
     osc.stop(audioCtx.currentTime + 0.16);
   } catch(e) {}
 }
+
+// Uplifting celebration chime / fanfare for quiz submission
+function playQuizCompleteSound() {
+  if (!audioCtx) return;
+  try {
+    // Upbeat celebratory chord sequence: C5 -> E5 -> G5 -> C6
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+
+    notes.forEach((freq, index) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      const startTime = audioCtx.currentTime + (index * 0.11);
+      const duration = index === notes.length - 1 ? 0.7 : 0.28;
+
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.09, startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    });
+  } catch(e) {}
+}
