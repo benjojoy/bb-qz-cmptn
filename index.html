@@ -116,37 +116,42 @@
 
     .options-list { display: flex; flex-direction: column; gap: 10px; }
 
-    /* Staggered slow-motion option animation */
-    @keyframes slideInOption {
+   /* Smooth right-to-left entrance with a natural deceleration curve */
+    @keyframes slideInFromRight {
       0% {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateX(45px);
+      }
+      60% {
+        opacity: 0.85;
       }
       100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateX(0);
       }
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-6px); }
+      from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     .option-btn {
       width: 100%;
       text-align: left;
-      padding: 14px 18px;
+      padding: 15px 20px;
       background: #fff;
       border: 1.5px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 1rem;
       font-family: inherit;
       cursor: pointer;
-      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+      transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
       line-height: 1.5;
-      opacity: 0; /* starts hidden until animated */
-      animation: slideInOption 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      opacity: 0; /* Stays hidden until its specific delay turns on */
+      /* Slower 0.65s transition using an ease-out cubic-bezier */
+      animation: slideInFromRight 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
     .option-btn:hover { border-color: var(--primary); background: #f5f3ff; }
@@ -557,7 +562,7 @@
     document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
     
     const catLabel = q[colIndex.category] ? ` • ${q[colIndex.category]}` : '';
-    document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${catLabel}${isMultiple ? ' (Select all that apply)' : ''}`;
+    document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? ' (Select all that apply)' : ''}`;
     
     // Animate question heading
     const qTitle = document.getElementById("qTitle");
@@ -591,17 +596,17 @@
     let selectedSet = new Set();
     document.getElementById("nextBtn").disabled = true;
 
-    // Render options one-by-one with staggered slow-motion and audio cues
+    // Render options one-by-one from right to left with a relaxed 450ms pacing
     options.forEach((opt, idx) => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
       btn.innerText = (isMultiple ? "☐ " : "") + opt.label;
 
-      // Staggered delay (150ms between each choice)
-      const delay = idx * 0.15;
+      // 450ms delay between each option appearance
+      const delay = idx * 0.45;
       btn.style.animationDelay = `${delay}s`;
 
-      // Play soft audio pop as each option finishes its entrance delay
+      // Trigger the soft chime sound right as each option begins sliding from the right
       setTimeout(() => {
         playOptionPopSound(idx);
       }, delay * 1000);
