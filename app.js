@@ -145,11 +145,11 @@ async function init() {
     if (targetTotal <= 0) targetTotal = pool.length;
 
     if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
-      // Direct pool slice for single difficulty filter
+      // Direct pool slice when a specific Difficulty Filter is selected
       shuffle(pool);
       selected = pool.slice(0, Math.min(targetTotal, pool.length));
     } else {
-      // Mixed distribution across difficulty quotas
+      // Mixed distribution across individual difficulty quotas
       let easy = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "EASY");
       let med = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "MEDIUM");
       let hard = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "HARD");
@@ -240,7 +240,6 @@ function renderQuestion() {
   document.getElementById("progressBar").style.width = `${percent}%`;
   document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
   
-  const catLabel = q[colIndex.category] ? ` • ${q[colIndex.category]}` : '';
   document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? ' (Select all that apply)' : ''}`;
   
   const qTitle = document.getElementById("qTitle");
@@ -359,7 +358,7 @@ function finishQuiz() {
   const total = questions.length;
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
 
-  // 2. Silently record response to your Google Sheet
+  // Record response to your Google Sheet via Web App
   const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
   if (SUBMIT_API_URL) {
@@ -481,7 +480,6 @@ function shuffle(arr) {
 const retakeBtn = document.getElementById("retakeBtn");
 if (retakeBtn) {
   retakeBtn.addEventListener("click", () => {
-    // 1. Reset state counters
     currentIndex = 0;
     userResponses = [];
     timeRemaining = 0;
@@ -490,24 +488,18 @@ if (retakeBtn) {
       timerInterval = null;
     }
 
-    // 2. Clear out review items
     document.getElementById("reviewContainer").innerHTML = "";
-
-    // 3. Reset progress bar
     document.getElementById("progressBar").style.width = "0%";
 
-    // 4. Re-shuffle questions for a fresh attempt
     if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
       shuffle(questions);
     }
 
-    // 5. Hide results screen & show start screen
     document.getElementById("resultScreen").classList.add("hidden");
     document.getElementById("startScreen").classList.remove("hidden");
     document.getElementById("startBtn").disabled = false;
     document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
 
-    // 6. Scroll smoothly back to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
