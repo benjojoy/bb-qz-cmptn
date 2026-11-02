@@ -341,6 +341,24 @@ function finishQuiz() {
   const total = questions.length;
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
 
+  // 2. Silently record response to your Google Sheet
+  const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
+
+  if (SUBMIT_API_URL) {
+    fetch(SUBMIT_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: document.getElementById("nameInput").value.trim(),
+        phone: document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "",
+        score: score,
+        total: total,
+        percent: percent
+      })
+    }).catch(err => console.error("Could not record response:", err));
+  }
+  
   let congratsHeader = "";
   let excellenceNote = "";
   let badgeColor = "#4f46e5";
