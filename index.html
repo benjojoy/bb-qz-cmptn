@@ -54,7 +54,7 @@
       height: 100%;
       background: var(--primary);
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.4s ease;
     }
 
     .header {
@@ -111,9 +111,28 @@
       font-weight: 700;
       line-height: 1.6;
       margin-bottom: 20px;
+      animation: fadeIn 0.4s ease forwards;
     }
 
     .options-list { display: flex; flex-direction: column; gap: 10px; }
+
+    /* Staggered slow-motion option animation */
+    @keyframes slideInOption {
+      0% {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .option-btn {
       width: 100%;
       text-align: left;
@@ -124,10 +143,14 @@
       font-size: 1rem;
       font-family: inherit;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
       line-height: 1.5;
+      opacity: 0; /* starts hidden until animated */
+      animation: slideInOption 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
+
     .option-btn:hover { border-color: var(--primary); background: #f5f3ff; }
+    .option-btn:active { transform: scale(0.985); }
     .option-btn.selected { border-color: var(--primary); background: #e0e7ff; font-weight: 600; }
 
     .btn {
@@ -144,8 +167,10 @@
       color: #fff;
       width: 100%;
       margin-top: 24px;
+      transition: background 0.2s ease, transform 0.1s ease;
     }
     .btn:hover { background: var(--primary-hover); }
+    .btn:active { transform: scale(0.99); }
     .btn:disabled { background: var(--muted); cursor: not-allowed; }
 
     .score-card {
@@ -237,7 +262,90 @@
   let timerInterval = null;
   let timeRemaining = 0;
 
-  // JSONP Loader with headers=0
+  // ----------------------------------------------------
+  // Web Audio Synthesizer (Zero external file dependencies)
+  // ----------------------------------------------------
+  let audioCtx = null;
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  // Soft "pop" as each option rolls in
+  function playOptionPopSound(index) {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+
+      // Base note ascending slightly for each option
+      const baseFreq = 420 + (index * 60);
+      osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, audioCtx.currentTime + 0.08);
+
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e) {}
+  }
+
+  // Bright, pleasant chime when selecting an option
+  function playSelectSound() {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.04); // A5
+
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.22);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.22);
+    } catch(e) {}
+  }
+
+  // Smooth swoop sound when clicking Next Question
+  function playNextQuestionSound() {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+
+      osc.frequency.setValueAtTime(320, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(640, audioCtx.currentTime + 0.16);
+
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.16);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.16);
+    } catch(e) {}
+  }
+
+  // ----------------------------------------------------
+  // Google Sheets Fetcher
+  // ----------------------------------------------------
   function fetchSheetData(sheetName) {
     return new Promise((resolve, reject) => {
       const callbackName = 'gviz_cb_' + Math.random().toString(36).substring(2, 9);
@@ -253,7 +361,6 @@
         }
 
         let allRows = [];
-
         if (data.table.cols && data.table.cols.some(c => c.label)) {
           allRows.push(data.table.cols.map(c => c.label || ""));
         }
@@ -289,7 +396,6 @@
         fetchSheetData("Questions")
       ]);
 
-      // Parse Settings
       settings = {};
       settingsRows.forEach(r => {
         if (!r || r.length === 0) return;
@@ -311,7 +417,6 @@
       let targetBook = (settings["book filter"] || settings["book"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
       let targetCategory = (settings["category filter"] || settings["category"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
 
-      // Dynamic Column Mapping from Questions sheet Header Row
       const headerRow = (rawQuestions[0] || []).map(c => String(c || "").trim().toLowerCase());
       const findIdx = (predicate, fallback) => {
         const idx = headerRow.findIndex(predicate);
@@ -334,7 +439,6 @@
 
       let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
 
-      // Apply Book Filter
       if (targetBook !== "ALL" && targetBook !== "") {
         pool = pool.filter(r => {
           const val = String(r[colIndex.book] || "").replace(/\s+/g, " ").trim().toUpperCase();
@@ -342,7 +446,6 @@
         });
       }
 
-      // Apply Category Filter
       if (targetCategory !== "ALL" && targetCategory !== "") {
         pool = pool.filter(r => {
           const val = String(r[colIndex.category] || "").replace(/\s+/g, " ").trim().toUpperCase();
@@ -357,7 +460,6 @@
         return;
       }
 
-      // Quotas
       const easyCount = Number(settings["easy count"]) || 0;
       const mediumCount = Number(settings["medium count"]) || 0;
       const hardCount = Number(settings["hard count"]) || 0;
@@ -407,6 +509,8 @@
   }
 
   document.getElementById("startBtn").addEventListener("click", () => {
+    initAudio(); // Audio context activates on first direct click
+
     const name = document.getElementById("nameInput").value.trim();
     if (!name) return alert("Please enter your name.");
 
@@ -453,8 +557,14 @@
     document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
     
     const catLabel = q[colIndex.category] ? ` • ${q[colIndex.category]}` : '';
-    document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? ' (Select all that apply)' : ''}`;
-    document.getElementById("qTitle").innerText = q[colIndex.question];
+    document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${catLabel}${isMultiple ? ' (Select all that apply)' : ''}`;
+    
+    // Animate question heading
+    const qTitle = document.getElementById("qTitle");
+    qTitle.style.animation = 'none';
+    qTitle.offsetHeight; // trigger reflow
+    qTitle.style.animation = 'fadeIn 0.35s ease forwards';
+    qTitle.innerText = q[colIndex.question];
 
     const correctKeys = correctRaw.split(",").map(k => k.trim());
 
@@ -481,12 +591,24 @@
     let selectedSet = new Set();
     document.getElementById("nextBtn").disabled = true;
 
-    options.forEach(opt => {
+    // Render options one-by-one with staggered slow-motion and audio cues
+    options.forEach((opt, idx) => {
       const btn = document.createElement("button");
       btn.className = "option-btn";
       btn.innerText = (isMultiple ? "☐ " : "") + opt.label;
 
+      // Staggered delay (150ms between each choice)
+      const delay = idx * 0.15;
+      btn.style.animationDelay = `${delay}s`;
+
+      // Play soft audio pop as each option finishes its entrance delay
+      setTimeout(() => {
+        playOptionPopSound(idx);
+      }, delay * 1000);
+
       btn.onclick = () => {
+        playSelectSound();
+
         if (isMultiple) {
           if (selectedSet.has(opt)) {
             selectedSet.delete(opt);
@@ -533,6 +655,8 @@
 
   // Next / Submit handler
   document.getElementById("nextBtn").addEventListener("click", () => {
+    playNextQuestionSound();
+
     if (currentIndex < questions.length - 1) {
       currentIndex++;
       renderQuestion();
@@ -552,9 +676,8 @@
     userResponses.forEach(r => { if (r && r.isCorrect) score++; });
 
     const total = questions.length;
-    const percent = Math.round((score / total) * 100);
+    const percent = total > 0 ? Math.round((score / total) * 100) : 0;
 
-    // Dynamic congratulatory message & badge based on score
     let congratsHeader = "";
     let excellenceNote = "";
     let badgeColor = "#4f46e5";
@@ -562,19 +685,19 @@
     if (percent >= 90) {
       congratsHeader = "🌟 Outstanding Excellence!";
       excellenceNote = "Outstanding knowledge of God's Word! Your dedication and mastery are truly commendable. Keep shining!";
-      badgeColor = "#16a34a"; // Green
+      badgeColor = "#16a34a";
     } else if (percent >= 75) {
       congratsHeader = "🎉 Well Done! Congratulations!";
       excellenceNote = "Great performance! You demonstrated a strong grasp of Scripture. Keep up the good work!";
-      badgeColor = "#4f46e5"; // Indigo
+      badgeColor = "#4f46e5";
     } else if (percent >= 50) {
       congratsHeader = "👍 Good Effort!";
       excellenceNote = "Good attempt! Review the references below to strengthen your understanding and try again.";
-      badgeColor = "#d97706"; // Amber
+      badgeColor = "#d97706";
     } else {
       congratsHeader = "📖 Keep Learning & Growing!";
       excellenceNote = "Every step in studying the Word is valuable. Take time to read through the scripture references below.";
-      badgeColor = "#64748b"; // Slate
+      badgeColor = "#64748b";
     }
 
     const confirmMsg = settings["confirmation message"] || "Thank you for completing the quiz!";
@@ -600,12 +723,12 @@
     const review = document.getElementById("reviewContainer");
     review.innerHTML = "";
 
+    // Show every question with its scripture reference
     questions.forEach((q, i) => {
       const res = userResponses[i];
       const isCorrect = res ? res.isCorrect : false;
-      const userAns = res && res.selected ? res.selected : "Not Answered / ഉത്തരമില്ല";
-      
-      // Get correct option text
+      const userAns = res && res.selected ? res.selected : "Not Answered / രേഖപ്പെടുത്തിയിട്ടില്ല";
+
       const type = String(q[colIndex.type] || "MCQ").trim().toUpperCase();
       const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
       let correctDisplay = "";
@@ -613,11 +736,15 @@
       if (type === "TF") {
         correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
       } else {
-        const keyMap = { "A": q[colIndex.optA], "B": q[colIndex.optB], "C": q[colIndex.optC], "D": q[colIndex.optD] };
+        const keyMap = {
+          "A": q[colIndex.optA],
+          "B": q[colIndex.optB],
+          "C": q[colIndex.optC],
+          "D": q[colIndex.optD]
+        };
         correctDisplay = ansKey.split(",").map(k => keyMap[k.trim()] || k.trim()).join(", ");
       }
 
-      // References from Col L (index 11) and Explanations from Col M (index 12)
       const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || q[11] || "");
       const exp = (res && res.explanation) ? res.explanation : (q[colIndex.exp] || q[12] || "");
 
