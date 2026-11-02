@@ -1,94 +1,100 @@
-// Web Audio API Synthesizer (No external audio file dependencies)
+// Web Audio API Synthesizer with Amplified Master Gain
 let audioCtx = null;
+let masterGain = null;
 
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime); // High master volume for phone speakers
+    masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
 }
 
-// Gentle pop as each option slides in
+// 1. Staggered Option Pop (Crisp & Audible)
 function playOptionPopSound(index) {
-  if (!audioCtx) return;
-  try {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = 'sine';
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    const baseFreq = 420 + (index * 55);
-    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, audioCtx.currentTime + 0.08);
-
-    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.08);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.08);
-  } catch(e) {}
-}
-
-// Bright chime when an option is selected
-function playSelectSound() {
-  if (!audioCtx) return;
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'triangle';
 
-    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.04);   // A5
+    const baseFreq = 480 + (index * 70);
+    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.3, audioCtx.currentTime + 0.1);
 
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.22);
+    gain.gain.setValueAtTime(0.45, audioCtx.currentTime); // Louder pop
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
 
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(masterGain);
 
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.22);
+    osc.stop(audioCtx.currentTime + 0.1);
   } catch(e) {}
 }
 
-// Low-to-high swoosh when proceeding to next question
-function playNextQuestionSound() {
-  if (!audioCtx) return;
+// 2. Clear Chime for Selection
+function playSelectSound() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = 'sine';
 
-    osc.frequency.setValueAtTime(320, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(640, audioCtx.currentTime + 0.16);
+    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5
+    osc.frequency.setValueAtTime(987.77, audioCtx.currentTime + 0.05); // B5
 
-    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.55, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
 
     osc.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(masterGain);
 
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.16);
+    osc.stop(audioCtx.currentTime + 0.25);
   } catch(e) {}
 }
 
-// Uplifting celebration chime / fanfare for quiz submission
-function playQuizCompleteSound() {
-  if (!audioCtx) {
-    initAudio();
-  }
-  // Mobile browsers suspend audio contexts during quiz gaps; wake it up immediately
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-  
+// 3. Swoop sound for Next Question
+function playNextQuestionSound() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
   try {
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+
+    osc.frequency.setValueAtTime(350, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.18);
+
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+
+    osc.connect(gain);
+    gain.connect(masterGain);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.18);
+  } catch(e) {}
+}
+
+// 4. Celebration Fanfare on Quiz Submit (Full Loudness)
+function playQuizCompleteSound() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  try {
+    // Bright Major Fanfare: C5, E5, G5, High C6
+    const notes = [523.25, 659.25, 783.99, 1046.50];
 
     notes.forEach((freq, index) => {
       const osc = audioCtx.createOscillator();
@@ -97,20 +103,19 @@ function playQuizCompleteSound() {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-      const startTime = audioCtx.currentTime + (index * 0.12);
-      const duration = index === notes.length - 1 ? 0.75 : 0.3;
+      const startTime = audioCtx.currentTime + (index * 0.13);
+      const isLast = (index === notes.length - 1);
+      const duration = isLast ? 0.9 : 0.32;
 
-      gain.gain.setValueAtTime(0.001, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.12, startTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      gain.gain.setValueAtTime(0.01, startTime);
+      gain.gain.exponentialRampToValueAtTime(isLast ? 0.65 : 0.45, startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain);
 
       osc.start(startTime);
       osc.stop(startTime + duration);
     });
-  } catch(e) {
-    console.error("Audio playback error:", e);
-  }
+  } catch(e) {}
 }
