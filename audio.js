@@ -79,10 +79,16 @@ function playNextQuestionSound() {
 
 // Uplifting celebration chime / fanfare for quiz submission
 function playQuizCompleteSound() {
-  if (!audioCtx) return;
+  if (!audioCtx) {
+    initAudio();
+  }
+  // Mobile browsers suspend audio contexts during quiz gaps; wake it up immediately
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
   try {
-    // Upbeat celebratory chord sequence: C5 -> E5 -> G5 -> C6
-    const notes = [523.25, 659.25, 783.99, 1046.50];
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
 
     notes.forEach((freq, index) => {
       const osc = audioCtx.createOscillator();
@@ -91,11 +97,11 @@ function playQuizCompleteSound() {
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-      const startTime = audioCtx.currentTime + (index * 0.11);
-      const duration = index === notes.length - 1 ? 0.7 : 0.28;
+      const startTime = audioCtx.currentTime + (index * 0.12);
+      const duration = index === notes.length - 1 ? 0.75 : 0.3;
 
       gain.gain.setValueAtTime(0.001, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.09, startTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.12, startTime + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
 
       osc.connect(gain);
@@ -104,5 +110,7 @@ function playQuizCompleteSound() {
       osc.start(startTime);
       osc.stop(startTime + duration);
     });
-  } catch(e) {}
+  } catch(e) {
+    console.error("Audio playback error:", e);
+  }
 }
