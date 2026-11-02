@@ -441,4 +441,24 @@ function shuffle(arr) {
   return arr;
 }
 
+// Retake Quiz Handler
+document.getElementById("retakeBtn").addEventListener("click", () => {
+  // Reset quiz progress
+  currentIndex = 0;
+  userResponses = [];
+  timeRemaining = 0;
+  if (timerInterval) clearInterval(timerInterval);
+
+  // Switch screens back to start
+  document.getElementById("resultScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+  document.getElementById("progressBar").style.width = "0%";
+  document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
+
+  // Re-shuffle for a fresh attempt
+  if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
+    shuffle(questions);
+  }
+});
+
 init();
