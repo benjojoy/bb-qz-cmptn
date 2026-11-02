@@ -80,6 +80,7 @@ async function init() {
 
     let targetBook = (settings["book filter"] || settings["book"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
     let targetCategory = (settings["category filter"] || settings["category"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
+    let targetDifficulty = (settings["difficulty filter"] || settings["difficulty"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
 
     // Map column headers
     const headerRow = (rawQuestions[0] || []).map(c => String(c || "").trim().toLowerCase());
@@ -104,6 +105,7 @@ async function init() {
 
     let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
 
+    // Filter by Book
     if (targetBook !== "ALL" && targetBook !== "") {
       pool = pool.filter(r => {
         const val = String(r[colIndex.book] || "").replace(/\s+/g, " ").trim().toUpperCase();
@@ -111,6 +113,7 @@ async function init() {
       });
     }
 
+    // Filter by Category
     if (targetCategory !== "ALL" && targetCategory !== "") {
       pool = pool.filter(r => {
         const val = String(r[colIndex.category] || "").replace(/\s+/g, " ").trim().toUpperCase();
@@ -118,41 +121,56 @@ async function init() {
       });
     }
 
+    // Filter by Difficulty
+    if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
+      pool = pool.filter(r => {
+        const val = String(r[colIndex.diff] || "").replace(/\s+/g, " ").trim().toUpperCase();
+        return val === targetDifficulty;
+      });
+    }
+
     if (pool.length === 0) {
       document.getElementById("progressText").innerText = "Total Questions: 0";
-      document.getElementById("quizDesc").innerText = `No questions found matching Book: "${targetBook}".`;
+      document.getElementById("quizDesc").innerText = `No questions found matching the chosen filters.`;
       document.getElementById("startBtn").disabled = true;
       return;
     }
 
-    // Quotas
+    // Question Selection
+    let selected = [];
     const easyCount = Number(settings["easy count"]) || 0;
     const mediumCount = Number(settings["medium count"]) || 0;
     const hardCount = Number(settings["hard count"]) || 0;
-
-    let easy = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "EASY");
-    let med = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "MEDIUM");
-    let hard = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "HARD");
-
-    shuffle(easy); 
-    shuffle(med); 
-    shuffle(hard);
-
-    let selected = [
-      ...easy.slice(0, easyCount),
-      ...med.slice(0, mediumCount),
-      ...hard.slice(0, hardCount)
-    ];
-
     let targetTotal = Number(settings["number of questions"]) || (easyCount + mediumCount + hardCount);
     if (targetTotal <= 0) targetTotal = pool.length;
-    targetTotal = Math.min(targetTotal, pool.length);
 
-    if (selected.length < targetTotal) {
-      const pickedSet = new Set(selected);
-      let remaining = pool.filter(r => !pickedSet.has(r));
-      shuffle(remaining);
-      selected = selected.concat(remaining.slice(0, targetTotal - selected.length));
+    if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
+      // Direct pool slice for single difficulty filter
+      shuffle(pool);
+      selected = pool.slice(0, Math.min(targetTotal, pool.length));
+    } else {
+      // Mixed distribution across difficulty quotas
+      let easy = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "EASY");
+      let med = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "MEDIUM");
+      let hard = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "HARD");
+
+      shuffle(easy);
+      shuffle(med);
+      shuffle(hard);
+
+      selected = [
+        ...easy.slice(0, easyCount),
+        ...med.slice(0, mediumCount),
+        ...hard.slice(0, hardCount)
+      ];
+
+      targetTotal = Math.min(targetTotal, pool.length);
+      if (selected.length < targetTotal) {
+        const pickedSet = new Set(selected);
+        let remaining = pool.filter(r => !pickedSet.has(r));
+        shuffle(remaining);
+        selected = selected.concat(remaining.slice(0, targetTotal - selected.length));
+      }
     }
 
     questions = selected;
