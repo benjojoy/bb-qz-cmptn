@@ -317,12 +317,13 @@ function renderQuestion() {
 }
 
 document.getElementById("nextBtn").addEventListener("click", () => {
-  playNextQuestionSound();
-
   if (currentIndex < questions.length - 1) {
+    playNextQuestionSound();
     currentIndex++;
     renderQuestion();
   } else {
+    // Final question submitted -> trigger the celebration sound
+    playQuizCompleteSound();
     if (timerInterval) clearInterval(timerInterval);
     finishQuiz();
   }
