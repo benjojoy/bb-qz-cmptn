@@ -223,7 +223,7 @@ function renderQuestion() {
   document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
   
   const catLabel = q[colIndex.category] ? ` • ${q[colIndex.category]}` : '';
-  document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${catLabel}${isMultiple ? ' (Select all that apply)' : ''}`;
+  document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? ' (Select all that apply)' : ''}`;
   
   const qTitle = document.getElementById("qTitle");
   qTitle.style.animation = 'none';
