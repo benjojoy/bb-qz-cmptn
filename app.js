@@ -442,23 +442,38 @@ function shuffle(arr) {
 }
 
 // Retake Quiz Handler
-document.getElementById("retakeBtn").addEventListener("click", () => {
-  // Reset quiz progress
-  currentIndex = 0;
-  userResponses = [];
-  timeRemaining = 0;
-  if (timerInterval) clearInterval(timerInterval);
+const retakeBtn = document.getElementById("retakeBtn");
+if (retakeBtn) {
+  retakeBtn.addEventListener("click", () => {
+    // 1. Reset state counters
+    currentIndex = 0;
+    userResponses = [];
+    timeRemaining = 0;
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
 
-  // Switch screens back to start
-  document.getElementById("resultScreen").classList.add("hidden");
-  document.getElementById("startScreen").classList.remove("hidden");
-  document.getElementById("progressBar").style.width = "0%";
-  document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
+    // 2. Clear out review items
+    document.getElementById("reviewContainer").innerHTML = "";
 
-  // Re-shuffle for a fresh attempt
-  if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
-    shuffle(questions);
-  }
-});
+    // 3. Reset progress bar
+    document.getElementById("progressBar").style.width = "0%";
+
+    // 4. Re-shuffle questions for a fresh attempt
+    if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
+      shuffle(questions);
+    }
+
+    // 5. Hide results screen & show start screen
+    document.getElementById("resultScreen").classList.add("hidden");
+    document.getElementById("startScreen").classList.remove("hidden");
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
+
+    // 6. Scroll smoothly back to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
 
 init();
