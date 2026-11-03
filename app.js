@@ -283,4 +283,82 @@ async function loadAdminMetrics() {
   }
 }
 
+// Function to populate Settings form fields with active Google Sheet settings
+function populateAdminSettingsForm() {
+  if (!settings) return;
+
+  document.getElementById("admSetTitle").value = settings["quiz title"] || "";
+  document.getElementById("admSetBook").value = settings["book filter"] || "";
+  document.getElementById("admSetDuration").value = settings["quiz duration minutes"] || 3;
+  document.getElementById("admSetEasy").value = settings["easy count"] || 0;
+  document.getElementById("admSetMedium").value = settings["medium count"] || 0;
+  document.getElementById("admSetHard").value = settings["hard count"] || 0;
+
+  document.getElementById("admSetShuffleQ").checked = String(settings["shuffle questions"]).toUpperCase() === "TRUE";
+  document.getElementById("admSetShuffleOpt").checked = String(settings["shuffle options"]).toUpperCase() === "TRUE";
+  document.getElementById("admSetReqPhone").checked = String(settings["require phone"]).toUpperCase() === "TRUE";
+  document.getElementById("admSetProgressBar").checked = String(settings["show progress bar"]).toUpperCase() === "TRUE";
+}
+
+// Call populateAdminSettingsForm when admin unlocks the modal
+submitAdminPassBtn.addEventListener("click", () => {
+  if (adminPassInput.value === ADMIN_PIN) {
+    adminAuthScreen.classList.add("hidden");
+    adminDataScreen.classList.remove("hidden");
+    loadAdminMetrics();
+    populateAdminSettingsForm();
+  } else {
+    alert("Invalid Admin PIN");
+  }
+});
+
+// Handle saving updated settings back to Google Sheets
+const adminSettingsForm = document.getElementById("adminSettingsForm");
+if (adminSettingsForm) {
+  adminSettingsForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const saveBtn = document.getElementById("saveSettingsBtn");
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Saving to Google Sheet...";
+
+    const updated = {
+      "Quiz Title": document.getElementById("admSetTitle").value.trim(),
+      "Book Filter": document.getElementById("admSetBook").value.trim(),
+      "Quiz Duration Minutes": document.getElementById("admSetDuration").value,
+      "Easy Count": document.getElementById("admSetEasy").value,
+      "Medium Count": document.getElementById("admSetMedium").value,
+      "Hard Count": document.getElementById("admSetHard").value,
+      "Number of Questions": (
+        Number(document.getElementById("admSetEasy").value) +
+        Number(document.getElementById("admSetMedium").value) +
+        Number(document.getElementById("admSetHard").value)
+      ),
+      "Shuffle Questions": document.getElementById("admSetShuffleQ").checked ? "TRUE" : "FALSE",
+      "Shuffle Options": document.getElementById("admSetShuffleOpt").checked ? "TRUE" : "FALSE",
+      "Require Phone": document.getElementById("admSetReqPhone").checked ? "TRUE" : "FALSE",
+      "Show Progress Bar": document.getElementById("admSetProgressBar").checked ? "TRUE" : "FALSE"
+    };
+
+    try {
+      // POST the updated settings to your Apps Script Web App URL
+      await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors", // Standard for Google Apps Script Web App endpoints
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updateSettings",
+          settings: updated
+        })
+      });
+
+      alert("Settings saved successfully! Reloading to apply changes.");
+      window.location.reload();
+    } catch (err) {
+      alert("Error saving settings: " + err.message);
+      saveBtn.disabled = false;
+      saveBtn.innerText = "💾 Save Settings to Google Sheet";
+    }
+  });
+}
+
 initApp();
