@@ -22,19 +22,77 @@ async function initApp() {
   }
 }
 
-// 1. Start Quiz Click
+// -------------------------------------------------------------
+// 1. Dark Mode / Light Mode Toggle
+// -------------------------------------------------------------
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+const savedTheme = localStorage.getItem("quiz_theme") || "light";
+
+if (savedTheme === "dark") {
+  document.body.classList.add("dark-mode");
+  if (themeToggleBtn) themeToggleBtn.innerText = "☀️";
+}
+
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener("click", () => {
+    const isDark = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("quiz_theme", isDark ? "dark" : "light");
+    themeToggleBtn.innerText = isDark ? "☀️" : "🌙";
+  });
+}
+
+// -------------------------------------------------------------
+// 2. Validation Helpers
+// -------------------------------------------------------------
+function validateName(name) {
+  // Allows English letters, Malayalam unicode script (\u0D00-\u0D7F), dots, and spaces. Min 2 characters.
+  const nameRegex = /^[A-Za-z\u0D00-\u0D7F\s.]{2,50}$/;
+  return nameRegex.test(name.trim());
+}
+
+function validatePhone(phone) {
+  // Cleans spaces, dashes, or +91 prefixes and checks for 10 consecutive digits
+  const cleaned = phone.replace(/[\s\-\(\)\+]/g, "").replace(/^91/, "");
+  const phoneRegex = /^[6-9]\d{9}$/; // Standard Indian 10-digit mobile format
+  return phoneRegex.test(cleaned);
+}
+
+// -------------------------------------------------------------
+// 3. Start Quiz with Validation Check
+// -------------------------------------------------------------
 document.getElementById("startBtn").addEventListener("click", () => {
   initAudio();
 
-  const name = document.getElementById("nameInput").value.trim();
-  if (!name) return alert("Please enter your name.");
+  const nameInput = document.getElementById("nameInput");
+  const phoneInput = document.getElementById("phoneInput");
+  const nameError = document.getElementById("nameError");
+  const phoneError = document.getElementById("phoneError");
 
+  const nameVal = nameInput.value.trim();
+  const phoneVal = phoneInput.value.trim();
   const isPhoneRequired = String(settings["require phone"]).toUpperCase() === "TRUE";
-  const phone = document.getElementById("phoneInput").value.trim();
 
-  if (isPhoneRequired && !phone) {
-    return alert("Please enter your WhatsApp number.");
+  let hasError = false;
+
+  // Name Validation
+  if (!nameVal || !validateName(nameVal)) {
+    nameError.style.display = "block";
+    nameInput.style.borderColor = "#ef4444";
+    nameInput.focus();
+    hasError = true;
   }
+
+  // Phone Validation (runs if required OR if user typed something in optional mode)
+  if (isPhoneRequired || phoneVal.length > 0) {
+    if (!validatePhone(phoneVal)) {
+      phoneError.style.display = "block";
+      phoneInput.style.borderColor = "#ef4444";
+      if (!hasError) phoneInput.focus();
+      hasError = true;
+    }
+  }
+
+  if (hasError) return;
 
   // Lock selected language for the duration of this quiz attempt
   const langDropdown = document.getElementById("langSelect");
