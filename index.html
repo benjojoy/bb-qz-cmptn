@@ -251,88 +251,127 @@
       break-inside: avoid !important;
     }
 
+    /* Floating Toast Message */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      background: #1e293b;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      max-width: 90%;
+      text-align: center;
+    }
+    
+    .toast.error {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    
+    .toast.success {
+      background: #10b981;
+      color: #ffffff;
+    }
+    
+    .toast.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-20px);
+      pointer-events: none;
+    }
+
     /* Dark Mode Palette Variables */
-body.dark-mode {
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-  --border: #334155;
-  background-color: var(--bg) !important;
-  color: var(--text) !important;
-}
-
-/* Card & Screen Containers */
-body.dark-mode .container,
-body.dark-mode .card,
-body.dark-mode #quizScreen,
-body.dark-mode #startScreen,
-body.dark-mode #resultScreen {
-  background-color: var(--card-bg) !important;
-  color: var(--text) !important;
-}
-
-/* Question Title & Meta */
-body.dark-mode #qTitle,
-body.dark-mode .question-title {
-  color: #f8fafc !important;
-}
-
-body.dark-mode #qMeta {
-  color: #818cf8 !important; /* Soft indigo for visibility */
-}
-
-/* Option Buttons */
-body.dark-mode .option-btn {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-/* Selected Option State */
-body.dark-mode .option-btn.selected {
-  background-color: #312e81 !important;
-  border-color: #6366f1 !important;
-  color: #ffffff !important;
-}
-
-/* Top Header & Buttons */
-body.dark-mode .header {
-  background-color: var(--bg) !important;
-  border-bottom-color: var(--border) !important;
-}
-
-body.dark-mode .header button {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-/* Inputs & Dropdowns */
-body.dark-mode input,
-body.dark-mode select {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-/* Review Cards on Results Screen */
-body.dark-mode .review-item {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
-}
-
-body.dark-mode .feedback-box {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
-  color: #e2e8f0 !important;
-}
-
-body.dark-mode .score-card {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-}
+    body.dark-mode {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      background-color: var(--bg) !important;
+      color: var(--text) !important;
+    }
+    
+    /* Card & Screen Containers */
+    body.dark-mode .container,
+    body.dark-mode .card,
+    body.dark-mode #quizScreen,
+    body.dark-mode #startScreen,
+    body.dark-mode #resultScreen {
+      background-color: var(--card-bg) !important;
+      color: var(--text) !important;
+    }
+    
+    /* Question Title & Meta */
+    body.dark-mode #qTitle,
+    body.dark-mode .question-title {
+      color: #f8fafc !important;
+    }
+    
+    body.dark-mode #qMeta {
+      color: #818cf8 !important; /* Soft indigo for visibility */
+    }
+    
+    /* Option Buttons */
+    body.dark-mode .option-btn {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    /* Selected Option State */
+    body.dark-mode .option-btn.selected {
+      background-color: #312e81 !important;
+      border-color: #6366f1 !important;
+      color: #ffffff !important;
+    }
+    
+    /* Top Header & Buttons */
+    body.dark-mode .header {
+      background-color: var(--bg) !important;
+      border-bottom-color: var(--border) !important;
+    }
+    
+    body.dark-mode .header button {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    /* Inputs & Dropdowns */
+    body.dark-mode input,
+    body.dark-mode select {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    /* Review Cards on Results Screen */
+    body.dark-mode .review-item {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    body.dark-mode .feedback-box {
+      background-color: #0f172a !important;
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+    }
+    
+    body.dark-mode .score-card {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+    }
 
   </style>
 </head>
@@ -448,7 +487,16 @@ body.dark-mode .score-card {
       <!-- Password Screen -->
       <div id="adminAuthScreen">
         <p style="font-size:0.9rem; color:var(--muted); margin-bottom:12px;">Enter Admin PIN to view live metrics from Google Sheets:</p>
-        <input type="password" id="adminPassInput" placeholder="Enter Admin PIN " style="width:100%; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:1rem; margin-bottom:12px;">
+        <input 
+          type="password" 
+          id="adminPassInput" 
+          inputmode="numeric" 
+          pattern="[0-9]*" 
+          autocomplete="one-time-code" 
+          maxlength="8" 
+          placeholder="Enter PIN" 
+          style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1.2rem; text-align: center; letter-spacing: 4px;"
+        >
         <button id="submitAdminPassBtn" class="btn" style="margin-top:0;">Login</button>
       </div>
 
@@ -534,5 +582,6 @@ body.dark-mode .score-card {
   <script src="quizEngine.js"></script>
   <script src="results.js"></script>
   <script src="app.js"></script>
+  <div id="toastNotification" class="toast hidden"></div>
 </body>
 </html>
