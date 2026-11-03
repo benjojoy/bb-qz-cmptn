@@ -1,5 +1,68 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
+// 1. Generate or retrieve a persistent Device ID for this browser
+function getOrCreateDeviceId() {
+  // 1. Maintain a persistent unique ID across tests on the same phone
+  let uniqueId = localStorage.getItem("quiz_device_uid");
+  if (!uniqueId) {
+    uniqueId = "DEV-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).slice(-4).toUpperCase();
+    localStorage.setItem("quiz_device_uid", uniqueId);
+  }
+
+  // 2. Extract Device Model and OS
+  let deviceModel = "Unknown Device";
+  let os = "Unknown OS";
+
+  if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+    try {
+      const hints = await navigator.userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]);
+      deviceModel = hints.model || hints.platform || "Desktop/Mobile";
+      os = `${hints.platform || ""} ${hints.platformVersion || ""}`.trim();
+    } catch (e) {
+      // Fallback if permission blocked
+    }
+  }
+
+  // Fallback for Safari/Firefox or older devices
+  if (deviceModel === "Unknown Device" || !deviceModel) {
+    const ua = navigator.userAgent;
+    if (/iPhone/i.test(ua)) deviceModel = "Apple iPhone";
+    else if (/iPad/i.test(ua)) deviceModel = "Apple iPad";
+    else if (/Android/i.test(ua)) {
+      const match = ua.match(/Android\s([0-9.]+);?\s?([^;]+)\sBuild/i);
+      deviceModel = match && match[2] ? match[2].trim() : "Android Device";
+      os = match && match[1] ? `Android ${match[1]}` : "Android";
+    } else if (/Windows/i.test(ua)) {
+      deviceModel = "Windows PC";
+    } else if (/Macintosh/i.test(ua)) {
+      deviceModel = "Mac";
+    }
+  }
+
+  // Format into a readable string for the sheet
+  return `${deviceModel} (${uniqueId})`;
+}
+
+// 2. Fetch IP and rough location asynchronously
+async function fetchClientNetworkInfo() {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    if (!res.ok) throw new Error("Network response failed");
+    const data = await res.json();
+    return {
+      ip: data.ip || "Unknown",
+      location: [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Unknown"
+    };
+  } catch (err) {
+    // Fallback if user has an ad-blocker or offline
+    return {
+      ip: "Unavailable",
+      location: "Unavailable"
+    };
+  }
+}
+
+
 function getBibleLink(bookName, ref) {
   if (!ref) return "";
   
@@ -49,6 +112,10 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const accuracyStr = `${percent}%`;
 
+  // Fetch Device ID, IP & Location
+  const deviceId = getOrCreateDeviceId();
+  const netInfo = await fetchClientNetworkInfo();
+
   if (SUBMIT_API_URL) {
     fetch(SUBMIT_API_URL, {
       method: "POST",
@@ -59,7 +126,10 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
         phone: document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "",
         score: score,
         total: total,
-        accuracy: accuracyStr
+        accuracy: accuracyStr,
+        deviceId: deviceId,
+        ipAddress: netInfo.ip,
+        location: netInfo.location
       })
     }).catch(err => console.error("Could not record response:", err));
   }
