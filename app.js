@@ -43,6 +43,13 @@ document.getElementById("startBtn").addEventListener("click", () => {
     localStorage.setItem("quiz_lang", currentLang);
   }
 
+  // 1. Hide the Admin Lock Icon during the quiz
+  const adminBtn = document.getElementById("adminBtn");
+  if (adminBtn) {
+    adminBtn.classList.add("hidden");
+  }
+
+  // 2. Transition screens
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
 
