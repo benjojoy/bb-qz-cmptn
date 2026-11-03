@@ -85,7 +85,7 @@ if (downloadPdfBtn) {
   });
 }
 
-// 6. Pre-fill WhatsApp with Score & Review Details
+// 6. Pre-fill WhatsApp with Score & Detailed Review Breakdown
 const shareWhatsAppBtn = document.getElementById("shareWhatsAppBtn");
 if (shareWhatsAppBtn) {
   shareWhatsAppBtn.addEventListener("click", () => {
@@ -95,18 +95,60 @@ if (shareWhatsAppBtn) {
     const percentText = document.getElementById("scorePercent").innerText;
     const quizTitle = document.getElementById("quizTitle").innerText;
 
-    const msg = encodeURIComponent(
-      `📖 *${quizTitle} - Result*\n\n` +
-      `👤 *Participant:* ${name}\n` +
-      `🎯 *Score:* ${scoreText} (${percentText})\n\n` +
-      `Take the quiz here: ${window.location.href}`
-    );
+    // Header Summary
+    let msg = `📖 *${quizTitle} - Result*\n\n` +
+              `👤 *Participant:* ${name}\n` +
+              `🎯 *Score:* ${scoreText} (${percentText})\n\n` +
+              `*Review Answers:*\n\n`;
+
+    // Loop through each question to append full Q&A breakdown
+    questions.forEach((q, i) => {
+      const res = userResponses[i];
+      const isCorrect = res ? res.isCorrect : false;
+      const userAns = res && res.selected ? res.selected : "Not Answered";
+      const icon = isCorrect ? "✅" : "❌";
+
+      // Answers, References & Explanations
+      const type = String(q[colIndex.type] || "MCQ").trim().toUpperCase();
+      const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
+      let correctDisplay = "";
+
+      if (type === "TF") {
+        correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
+      } else {
+        const keyMap = {
+          "A": q[colIndex.optA],
+          "B": q[colIndex.optB],
+          "C": q[colIndex.optC],
+          "D": q[colIndex.optD]
+        };
+        correctDisplay = ansKey.split(",").map(k => keyMap[k.trim()] || k.trim()).join(", ");
+      }
+
+      const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || "");
+      const exp = (res && res.explanation) ? res.explanation : (q[colIndex.exp] || "");
+
+      msg += `${i + 1}. ${q[colIndex.question]}\n`;
+      msg += `Your Answer: ${userAns} ${icon}\n`;
+      if (!isCorrect) {
+        msg += `Correct Answer: ${correctDisplay}\n`;
+      }
+      if (ref) {
+        msg += `📖 Reference: ${ref}\n`;
+      }
+      if (exp) {
+        msg += `💡 Explanation: ${exp}\n`;
+      }
+      msg += `\n`; // Spacing between questions
+    });
+
+    const encodedMsg = encodeURIComponent(msg.trim());
 
     if (phone.length >= 10) {
       const formattedPhone = phone.length === 10 ? `91${phone}` : phone;
-      window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${msg}`, "_blank");
+      window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMsg}`, "_blank");
     } else {
-      window.open(`https://api.whatsapp.com/send?text=${msg}`, "_blank");
+      window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
     }
   });
 }
