@@ -1,5 +1,39 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
+// Helper to create YouVersion Bible Links for Malayalam
+function getBibleLink(bookName, ref) {
+  if (!ref) return "";
+  
+  // Standard YouVersion Book USFM Abbreviations
+  const bookCodes = {
+    "GENESIS": "GEN", "EXODUS": "EXO", "LEVITICUS": "LEV", "NUMBERS": "NUM", "DEUTERONOMY": "DEU",
+    "JOSHUA": "JOS", "JUDGES": "JDG", "RUTH": "RUT", "1 SAMUEL": "1SA", "2 SAMUEL": "2SA",
+    "1 KINGS": "1KI", "2 KINGS": "2KI", "1 CHRONICLES": "1CH", "2 CHRONICLES": "2CH",
+    "EZRA": "EZR", "NEHEMIAH": "NEH", "ESTHER": "EST", "JOB": "JOB", "PSALMS": "PSA", "PROVERBS": "PRO",
+    "ECCLESIASTES": "ECC", "SONG OF SOLOMON": "SNG", "ISAIAH": "ISA", "JEREMIAH": "JER",
+    "LAMENTATIONS": "LAM", "EZEKIEL": "EZK", "DANIEL": "DAN", "HOSEA": "HOS", "JOEL": "JOL",
+    "AMOS": "AMO", "OBADIAH": "OBA", "JONAH": "JON", "MICAH": "MIC", "NAHUM": "NAM",
+    "HABAKKUK": "HAB", "ZEPHANIAH": "ZEP", "HAGGAI": "HAG", "ZECHARIAH": "ZEC", "MALACHI": "MAL",
+    "MATTHEW": "MAT", "MARK": "MRK", "LUKE": "LUK", "JOHN": "JHN", "ACTS": "ACT",
+    "ROMANS": "ROM", "1 CORINTHIANS": "1CO", "2 CORINTHIANS": "2CO", "GALATIANS": "GAL",
+    "EPHESIANS": "EPH", "PHILIPPIANS": "PHP", "COLOSSIANS": "COL", "1 THESSALONIANS": "1TH",
+    "2 THESSALONIANS": "2TH", "1 TIMOTHY": "1TI", "2 TIMOTHY": "2TI", "TITUS": "TIT",
+    "PHILEMON": "PHM", "HEBREWS": "HEB", "JAMES": "JAS", "1 PETER": "1PE", "2 PETER": "2PE",
+    "1 JOHN": "1JN", "2 JOHN": "2JN", "3 JOHN": "3JN", "JUDE": "JUD", "REVELATION": "REV"
+  };
+
+  const cleanBook = String(bookName || "").trim().toUpperCase();
+  const code = bookCodes[cleanBook] || "2CO"; // defaults to current book context
+
+  // Parses chapter:verse formats like "3:9", "1:22", "2:14-17"
+  const refParts = ref.replace(/[^0-9:-]/g, "").split(":");
+  const chapter = refParts[0] || "1";
+  const verse = refParts[1] ? refParts[1].split("-")[0] : "1";
+
+  // MALOVBSI (Malayalam Bible Version 1693 on Bible.com)
+  return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
+}
+
 function showQuizResults(questions, userResponses, settings, colIndex) {
   document.getElementById("progressBar").style.width = "100%";
   document.getElementById("quizScreen").classList.add("hidden");
@@ -97,6 +131,8 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
     const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || q[11] || "");
     const exp = (res && res.explanation) ? res.explanation : (q[colIndex.exp] || q[12] || "");
 
+    const bibleUrl = getBibleLink(q[colIndex.book], ref);
+
     const div = document.createElement("div");
     div.className = `review-item ${isCorrect ? 'pass' : 'fail'}`;
     div.innerHTML = `
@@ -111,8 +147,15 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
       ` : ''}
       ${(ref || exp) ? `
         <div class="feedback-box">
-          ${ref ? `<div style="font-weight: 600; color: #4338ca;">📖 <strong>Reference:</strong> ${ref}</div>` : ''}
-          ${exp ? `<div style="margin-top: 4px;">💡 <strong>Explanation:</strong> ${exp}</div>` : ''}
+          ${ref ? `
+            <div style="font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: space-between;">
+              <span>📖 <strong>Reference:</strong> ${ref}</span>
+              <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
+                📖 Open in Malayalam Bible ↗
+              </a>
+            </div>
+          ` : ''}
+          ${exp ? `<div style="margin-top: 6px; line-height: 1.5;">💡 <strong>Explanation:</strong> ${exp}</div>` : ''}
         </div>
       ` : ''}
     `;
