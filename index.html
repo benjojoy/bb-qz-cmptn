@@ -379,6 +379,62 @@
         <div id="admTopPerformers" style="font-size:0.9rem; margin-bottom:16px;">Loading...</div>
 
         <button id="refreshAdminBtn" class="btn" style="margin-top:10px; background:#475569; padding:10px;">🔄 Refresh Metrics</button>
+
+        <!-- Settings Editor Section inside #adminDataScreen -->
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+        <h4 style="margin: 0 0 12px 0;">⚙️ Live Quiz Configuration</h4>
+
+        <form id="adminSettingsForm" style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
+          <div>
+            <label style="font-weight:600; display:block; margin-bottom:4px;">Quiz Title</label>
+            <input type="text" id="admSetTitle" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-weight:600; display:block; margin-bottom:4px;">Book Filter</label>
+              <input type="text" id="admSetBook" placeholder="e.g. 2 Corinthians" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            </div>
+            <div>
+              <label style="font-weight:600; display:block; margin-bottom:4px;">Duration (Minutes)</label>
+              <input type="number" id="admSetDuration" min="1" max="120" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-weight:600; display:block; margin-bottom:4px;">Easy Count</label>
+              <input type="number" id="admSetEasy" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            </div>
+            <div>
+              <label style="font-weight:600; display:block; margin-bottom:4px;">Medium Count</label>
+              <input type="number" id="admSetMedium" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            </div>
+            <div>
+              <label style="font-weight:600; display:block; margin-bottom:4px;">Hard Count</label>
+              <input type="number" id="admSetHard" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="admSetShuffleQ"> Shuffle Questions
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="admSetShuffleOpt"> Shuffle Options
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="admSetReqPhone"> Require Phone
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="admSetProgressBar"> Progress Bar
+            </label>
+          </div>
+
+          <button type="submit" id="saveSettingsBtn" class="btn" style="margin-top:14px; background:var(--primary);">
+            💾 Save Settings to Google Sheet
+          </button>
+        </form>
       </div>
     </div>
   </div>
