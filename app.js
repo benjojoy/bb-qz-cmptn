@@ -36,6 +36,13 @@ document.getElementById("startBtn").addEventListener("click", () => {
     return alert("Please enter your WhatsApp number.");
   }
 
+  // Lock selected language for the duration of this quiz attempt
+  const langDropdown = document.getElementById("langSelect");
+  if (langDropdown) {
+    currentLang = langDropdown.value; // 'ml' or 'en'
+    localStorage.setItem("quiz_lang", currentLang);
+  }
+
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
 
@@ -150,24 +157,6 @@ if (shareWhatsAppBtn) {
       window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMsg}`, "_blank");
     } else {
       window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
-    }
-  });
-}
-
-const langToggleBtn = document.getElementById("langToggleBtn");
-if (langToggleBtn) {
-  langToggleBtn.innerText = currentLang === "en" ? "മലയാളം - Published by Bible Society of India" : "ENG - ESV version";
-
-  langToggleBtn.addEventListener("click", () => {
-    currentLang = currentLang === "en" ? "ml" : "en";
-    localStorage.setItem("quiz_lang", currentLang);
-    langToggleBtn.innerText = currentLang === "en" ? "മലയാളം - Published by Bible Society of India" : "ENG - ESV version";
-
-    // If currently answering a question, re-render it in the selected language
-    if (!document.getElementById("quizScreen").classList.contains("hidden")) {
-      renderQuestion();
-    } else if (!document.getElementById("resultScreen").classList.contains("hidden")) {
-      showQuizResults(questions, userResponses, settings, colIndex);
     }
   });
 }
