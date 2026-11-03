@@ -1,10 +1,8 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
-// Helper to create YouVersion Bible Links for Malayalam
 function getBibleLink(bookName, ref) {
   if (!ref) return "";
   
-  // Standard YouVersion Book USFM Abbreviations
   const bookCodes = {
     "GENESIS": "GEN", "EXODUS": "EXO", "LEVITICUS": "LEV", "NUMBERS": "NUM", "DEUTERONOMY": "DEU",
     "JOSHUA": "JOS", "JUDGES": "JDG", "RUTH": "RUT", "1 SAMUEL": "1SA", "2 SAMUEL": "2SA",
@@ -25,7 +23,6 @@ function getBibleLink(bookName, ref) {
   const cleanBook = String(bookName || "").trim().toUpperCase();
   const code = bookCodes[cleanBook] || "2CO"; // defaults to current book context
 
-  // Parses chapter:verse formats like "3:9", "1:22", "2:14-17"
   const refParts = ref.replace(/[^0-9:-]/g, "").split(":");
   const chapter = refParts[0] || "1";
   const verse = refParts[1] ? refParts[1].split("-")[0] : "1";
@@ -33,11 +30,13 @@ function getBibleLink(bookName, ref) {
   if (currentLang === "en") {
     return `https://www.bible.com/bible/59/${code}.${chapter}.${verse}.ESV`;
   }
-  // MALOVBSI (Malayalam Bible Version 1693 on Bible.com)
+
   return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
 }
 
 function showQuizResults(questions, userResponses, settings, colIndex) {
+  const header = document.querySelector(".header");
+  if (header) header.classList.add("hidden");
   document.getElementById("progressBar").style.width = "100%";
   document.getElementById("quizScreen").classList.add("hidden");
   document.getElementById("timerBadge").classList.add("hidden");
@@ -50,7 +49,6 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const accuracyStr = `${percent}%`;
 
-  // Background logging to Google Sheets via Web App
   if (SUBMIT_API_URL) {
     fetch(SUBMIT_API_URL, {
       method: "POST",
@@ -115,7 +113,6 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
     const res = userResponses[i];
     const isCorrect = res ? res.isCorrect : false;
     
-    // 1. Localize Default Empty Answer
     const notAnsweredText = currentLang === "en" ? "Not Answered" : "രേഖപ്പെടുത്തിയിട്ടില്ല";
     const userAns = res && res.selected ? res.selected : notAnsweredText;
 
@@ -123,7 +120,6 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
     const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
     let correctDisplay = "";
 
-    // 2. Localize True/False and Options
     if (type === "TF") {
       if (currentLang === "en") {
         correctDisplay = ansKey === "A" ? "True" : "False";
@@ -140,12 +136,10 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
       correctDisplay = ansKey.split(",").map(k => keyMap[k.trim()] || k.trim()).join(", ");
     }
 
-    // 3. Localize Question & Explanation
     const qText = getLocalizedText(q, colIndex.question, colIndex.question_en);
     const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || q[11] || "");
     const expText = getLocalizedText(q, colIndex.exp, colIndex.exp_en);
 
-    // 4. Localize Labels & Links
     const yourAnsLabel = currentLang === "en" ? "Your Answer" : "Your Answer";
     const correctAnsLabel = currentLang === "en" ? "Correct Answer" : "Correct Answer";
     const refLabel = currentLang === "en" ? "Reference" : "Reference";
