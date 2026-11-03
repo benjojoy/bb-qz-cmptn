@@ -60,7 +60,7 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
         phone: document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "",
         score: score,
         total: total,
-        percent: percent
+        accuracy: percent
       })
     }).catch(err => console.error("Could not record response:", err));
   }
