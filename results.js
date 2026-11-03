@@ -48,6 +48,7 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
 
   const total = questions.length;
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
+  const accuracyStr = `${percent}%`;
 
   // Background logging to Google Sheets via Web App
   if (SUBMIT_API_URL) {
@@ -60,7 +61,7 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
         phone: document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "",
         score: score,
         total: total,
-        accuracy: percent
+        accuracy: accuracyStr
       })
     }).catch(err => console.error("Could not record response:", err));
   }
