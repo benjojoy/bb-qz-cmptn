@@ -154,6 +154,24 @@ if (shareWhatsAppBtn) {
   });
 }
 
+const langToggleBtn = document.getElementById("langToggleBtn");
+if (langToggleBtn) {
+  langToggleBtn.innerText = currentLang === "en" ? "മലയാളം - Published by Bible Society of India" : "ENG - ESV version";
+
+  langToggleBtn.addEventListener("click", () => {
+    currentLang = currentLang === "en" ? "ml" : "en";
+    localStorage.setItem("quiz_lang", currentLang);
+    langToggleBtn.innerText = currentLang === "en" ? "മലയാളം - Published by Bible Society of India" : "ENG - ESV version";
+
+    // If currently answering a question, re-render it in the selected language
+    if (!document.getElementById("quizScreen").classList.contains("hidden")) {
+      renderQuestion();
+    } else if (!document.getElementById("resultScreen").classList.contains("hidden")) {
+      showQuizResults(questions, userResponses, settings, colIndex);
+    }
+  });
+}
+
 // -------------------------------------------------------------
 // 1. Mute Toggle Wiring
 // -------------------------------------------------------------
