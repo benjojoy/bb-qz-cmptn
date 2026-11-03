@@ -2,7 +2,15 @@ const SPREADSHEET_ID = "1HgFUzf11pVn8W7WK-6PJ_22QnhSXMAEJ6ERz5OuMqVo";
 
 let settings = {};
 let questions = [];
-let colIndex = { id: 0, book: 1, category: 2, type: 3, question: 4, optA: 5, optB: 6, optC: 7, optD: 8, answer: 9, diff: 10, ref: 11, exp: 12 };
+let currentLang = localStorage.getItem("quiz_lang") || "ml"; // 'ml' or 'en'
+
+let colIndex = { 
+  id: 0, book: 1, category: 2, type: 3, 
+  question: 4, optA: 5, optB: 6, optC: 7, optD: 8, 
+  answer: 9, diff: 10, ref: 11, exp: 12,
+  // English column indices:
+  question_en: -1, optA_en: -1, optB_en: -1, optC_en: -1, optD_en: -1, exp_en: -1
+};
 
 // JSONP fetcher bypassing CORS
 function fetchSheetData(sheetName) {
@@ -97,6 +105,12 @@ async function loadQuizData() {
   colIndex.diff = findIdx(h => h.includes("diff"), 10);
   colIndex.ref = findIdx(h => h.includes("ref"), 11);
   colIndex.exp = findIdx(h => h.includes("expl"), 12);
+  colIndex.question_en = findIdx(h => h.includes("question") && (h.includes("en") || h.includes("eng")), -1);
+  colIndex.optA_en = findIdx(h => (h.includes("opt a") || h.includes("option a") || h === "a") && (h.includes("en") || h.includes("eng")), -1);
+  colIndex.optB_en = findIdx(h => (h.includes("opt b") || h.includes("option b") || h === "b") && (h.includes("en") || h.includes("eng")), -1);
+  colIndex.optC_en = findIdx(h => (h.includes("opt c") || h.includes("option c") || h === "c") && (h.includes("en") || h.includes("eng")), -1);
+  colIndex.optD_en = findIdx(h => (h.includes("opt d") || h.includes("option d") || h === "d") && (h.includes("en") || h.includes("eng")), -1);
+  colIndex.exp_en = findIdx(h => h.includes("exp") && (h.includes("en") || h.includes("eng")), -1);
 
   let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
 
@@ -165,4 +179,11 @@ function shuffle(arr) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function getLocalizedText(row, mlIdx, enIdx) {
+  if (currentLang === "en" && enIdx !== -1 && row[enIdx] && String(row[enIdx]).trim() !== "") {
+    return String(row[enIdx]).trim();
+  }
+  return String(row[mlIdx] || "").trim();
 }
