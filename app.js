@@ -44,4 +44,12 @@ if (retakeBtn) {
   retakeBtn.addEventListener("click", retakeQuizAction);
 }
 
+// Refresh Quiz Handler (Full page reload to fetch fresh questions/settings)
+const refreshBtn = document.getElementById("refreshBtn");
+if (refreshBtn) {
+  refreshBtn.addEventListener("click", () => {
+    window.location.reload();
+  });
+}
+
 initApp();
