@@ -250,6 +250,49 @@
       page-break-inside: avoid !important;
       break-inside: avoid !important;
     }
+
+    /* Dark Mode Palette Variables */
+    body.dark-mode {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+    
+    /* Adjustments for inputs, modals, and elements in Dark Mode */
+    body.dark-mode input,
+    body.dark-mode select {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    body.dark-mode .header button,
+    body.dark-mode #langSelect {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    
+    body.dark-mode .feedback-box {
+      background-color: #0f172a !important;
+      border-color: #334155 !important;
+      color: #e2e8f0 !important;
+    }
+    
+    body.dark-mode .score-card {
+      background-color: #1e293b !important;
+    }
+    
+    body.dark-mode #adminModal > div {
+      background-color: #1e293b !important;
+      color: #f8fafc !important;
+    }
+    
+    body.dark-mode #adminModal div[style*="background:#f1f5f9"] {
+      background: #0f172a !important;
+    }
   </style>
 </head>
 <body>
@@ -272,6 +315,8 @@
         <button id="fontDecBtn" style="border:none; background:#fff; padding: 4px 8px; font-weight:700; cursor:pointer;" title="Decrease font">A-</button>
         <button id="fontIncBtn" style="border:none; border-left:1px solid var(--border); background:#fff; padding: 4px 8px; font-weight:700; cursor:pointer;" title="Increase font">A+</button>
       </div>
+      <!-- Theme Toggle (Dark/Light) -->
+      <button id="themeToggleBtn" style="border: 1px solid var(--border); background:#fff; border-radius: 8px; padding: 4px 8px; cursor:pointer; font-size: 1rem;" title="Toggle Dark/Light Mode">🌙</button>
       <button id="muteBtn" style="border: 1px solid var(--border); background:#fff; border-radius: 8px; padding: 4px 8px; cursor:pointer; font-size: 1rem;" title="Toggle Audio">🔊</button>
       <button id="adminBtn" style="border: 1px solid var(--border); background:#fff; border-radius: 8px; padding: 4px 8px; cursor:pointer; font-size: 0.9rem;" title="Admin Dashboard">🔒</button>
     </div>
@@ -282,14 +327,18 @@
     <h1 id="quizTitle">Bible Quiz</h1>
     <p class="desc" id="quizDesc">Loading quiz settings and questions from Google Sheets...</p>
 
-    <div class="input-group">
-      <label for="nameInput">Full Name / പേര് *</label>
-      <input type="text" id="nameInput" placeholder="Enter your full name">
+    <!-- Name Input Group -->
+    <div class="input-group" style="margin-bottom: 12px;">
+      <label for="nameInput" style="display: block; font-weight: 600; margin-bottom: 4px;">Name / പേര് *</label>
+      <input type="text" id="nameInput" placeholder="Enter your full name" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem;">
+      <small id="nameError" style="color: #ef4444; font-size: 0.8rem; display: none; margin-top: 4px;">Please enter a valid name (at least 3 letters, alphabets only).</small>
     </div>
 
-    <div class="input-group" id="phoneGroup">
-      <label for="phoneInput" id="phoneLabel">WhatsApp Number *</label>
-      <input type="text" id="phoneInput" placeholder="Enter WhatsApp number">
+    <!-- Phone Input Group -->
+    <div class="input-group" style="margin-bottom: 12px;">
+      <label for="phoneInput" id="phoneLabel" style="display: block; font-weight: 600; margin-bottom: 4px;">WhatsApp Number</label>
+      <input type="tel" id="phoneInput" placeholder="e.g. 9876543210" maxlength="14" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem;">
+      <small id="phoneError" style="color: #ef4444; font-size: 0.8rem; display: none; margin-top: 4px;">Please enter a valid 10-digit mobile number.</small>
     </div>
 
     <!-- Language Selection Dropdown -->
