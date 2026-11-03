@@ -284,7 +284,7 @@ if (adminBtn) {
 
   submitAdminPassBtn.addEventListener("click", () => {
     if (!adminPassInput.value) {
-      showToast("Please enter the Admin PIN", "error");
+      showToast("Please enter the PIN", "error");
       adminPassInput.focus();
       return;
     }
@@ -296,7 +296,7 @@ if (adminBtn) {
       loadAdminMetrics();
       populateAdminSettingsForm();
     } else {
-      showToast("Incorrect Admin PIN! Please try again.", "error");
+      showToast("Incorrect PIN! Please try again.", "error");
       adminPassInput.value = "";
       adminPassInput.focus();
     }
@@ -415,7 +415,7 @@ if (adminSettingsForm) {
         })
       });
 
-      showToast("Settings saved successfully! Reloading to apply changes.", "success");
+      showToast("Saved successfully! Reloading to apply changes.", "success");
       setTimeout(() => {
         window.location.reload();
       }, 1200);
