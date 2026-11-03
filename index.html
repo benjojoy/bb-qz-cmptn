@@ -268,9 +268,6 @@
 
     <!-- Header Actions: Font controls, Mute, Admin -->
     <div style="display: flex; align-items: center; gap: 6px;">
-      <button id="langToggleBtn" style="border: 1px solid var(--border); background:#fff; border-radius: 8px; padding: 4px 8px; cursor:pointer; font-weight:700; font-size:0.85rem;" title="Switch Language">
-        ENG
-      </button>
       <div style="display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
         <button id="fontDecBtn" style="border:none; background:#fff; padding: 4px 8px; font-weight:700; cursor:pointer;" title="Decrease font">A-</button>
         <button id="fontIncBtn" style="border:none; border-left:1px solid var(--border); background:#fff; padding: 4px 8px; font-weight:700; cursor:pointer;" title="Increase font">A+</button>
@@ -293,6 +290,17 @@
     <div class="input-group" id="phoneGroup">
       <label for="phoneInput" id="phoneLabel">WhatsApp Number *</label>
       <input type="text" id="phoneInput" placeholder="Enter WhatsApp number">
+    </div>
+
+    <!-- Language Selection Dropdown -->
+    <div class="input-group" id="langGroup" style="margin-top: 14px;">
+      <label for="langSelect" style="display: block; font-weight: 600; margin-bottom: 6px;">
+        Choose Language / ഭാഷ തിരഞ്ഞെടുക്കുക *
+      </label>
+      <select id="langSelect" style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; color: var(--text);">
+        <option value="ml" selected>മലയാളം (Malayalam Bible Published by Bible Society of India)</option>
+        <option value="en">English (English Standard Version - ESV)</option>
+      </select>
     </div>
 
     <button class="btn" id="startBtn" disabled>Start Quiz</button>
