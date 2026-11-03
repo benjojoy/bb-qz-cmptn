@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -290,7 +291,18 @@
       <div class="score-number" id="scoreValue">0 / 0</div>
       <p id="scorePercent" style="font-weight: 600;"></p>
     </div>
-    
+
+    <!-- Action Buttons: PDF & WhatsApp -->
+    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <button class="btn" id="downloadPdfBtn" style="margin-top: 0; flex: 1; background: #059669;">
+        📄 Download PDF
+      </button>
+      <button class="btn" id="shareWhatsAppBtn" style="margin-top: 0; flex: 1; background: #16a34a;">
+        💬 Share on WhatsApp
+      </button>
+    </div>
+
+    <!-- Navigation Buttons -->
     <div style="display: flex; gap: 10px; margin-bottom: 24px;">
       <button class="btn" id="retakeBtn" style="margin-top: 0; flex: 1; background: #334155;">
         🔄 Retake / വീണ്ടും ചെയ്യുക
