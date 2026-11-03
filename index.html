@@ -686,15 +686,77 @@
             <input type="text" id="admSetTitle" placeholder="e.g. 2 Corinthians Quiz">
           </div>
 
-          <!-- Book & Duration (2 equal columns) -->
+          <!-- Book Filter Dropdown & Duration -->
           <div class="form-row-2">
             <div class="form-field">
               <label for="admSetBook">Book Filter</label>
-              <input type="text" id="admSetBook" placeholder="2 Corinthians">
+              <select id="admSetBook" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: #f8fafc; box-sizing: border-box;">
+                <option value="1 Corinthians">1 Corinthians</option>
+                <option value="2 Corinthians">2 Corinthians</option>
+              </select>
             </div>
             <div class="form-field">
               <label for="admSetDuration">Duration (Mins)</label>
               <input type="number" id="admSetDuration" min="1" max="120" placeholder="3">
+            </div>
+          </div>
+
+          <!-- Chapter Filter (Category Filter) Multi-Select Card -->
+          <div class="config-card">
+            <div class="config-card-title">Chapter Filter (Category)</div>
+            <div class="toggle-grid" id="chapterFilterGroup">
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 1">
+                <span>Chapter 1</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 2">
+                <span>Chapter 2</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 3">
+                <span>Chapter 3</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 4">
+                <span>Chapter 4</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 5">
+                <span>Chapter 5</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 6">
+                <span>Chapter 6</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 7">
+                <span>Chapter 7</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 8">
+                <span>Chapter 8</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 9">
+                <span>Chapter 9</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 10">
+                <span>Chapter 10</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 11">
+                <span>Chapter 11</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 12">
+                <span>Chapter 12</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" name="chapterFilter" value="Chapter 13">
+                <span>Chapter 13</span>
+              </label>
             </div>
           </div>
 
