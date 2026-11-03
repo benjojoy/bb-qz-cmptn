@@ -1,12 +1,13 @@
 // Web Audio API Synthesizer with Amplified Output
 let audioCtx = null;
 let masterGain = null;
+let isMuted = localStorage.getItem("quiz_muted") === "true";
 
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Full master volume
+    masterGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
     masterGain.connect(audioCtx.destination);
   }
   if (audioCtx.state === 'suspended') {
@@ -14,23 +15,31 @@ function initAudio() {
   }
 }
 
-// 1. Staggered Option Pop (Loud, punchy wooden/bubble tap)
+function toggleMute() {
+  isMuted = !isMuted;
+  localStorage.setItem("quiz_muted", isMuted);
+  return isMuted;
+}
+
+function getMuteState() {
+  return isMuted;
+}
+
+// 1. Staggered Option Pop
 function playOptionPopSound(index) {
+  if (isMuted) return;
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
-    // Triangle gives more punch on small phone speakers
     osc.type = 'triangle';
 
     const baseFreq = 520 + (index * 80);
     osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.4, audioCtx.currentTime + 0.12);
 
-    // Boosted initial gain
     gain.gain.setValueAtTime(0.85, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
 
@@ -42,15 +51,14 @@ function playOptionPopSound(index) {
   } catch(e) {}
 }
 
-// 2. Clear Chime for Selection (Dual-tone crystal ding)
+// 2. Clear Chime for Selection
 function playSelectSound() {
+  if (isMuted) return;
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
   try {
     const now = audioCtx.currentTime;
-    
-    // Primary Tone (High E6)
     const osc1 = audioCtx.createOscillator();
     const gain1 = audioCtx.createGain();
     osc1.type = 'triangle';
@@ -64,7 +72,6 @@ function playSelectSound() {
     osc1.start(now);
     osc1.stop(now + 0.28);
 
-    // Secondary Harmonics (B5) for full bell body
     const osc2 = audioCtx.createOscillator();
     const gain2 = audioCtx.createGain();
     osc2.type = 'sine';
@@ -80,8 +87,9 @@ function playSelectSound() {
   } catch(e) {}
 }
 
-// 3. Swoosh for Next Question (Audible dynamic frequency sweep)
+// 3. Swoosh for Next Question
 function playNextQuestionSound() {
+  if (isMuted) return;
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -100,13 +108,14 @@ function playNextQuestionSound() {
     osc.connect(gain);
     gain.connect(masterGain);
 
-    osc.start(now);
+    osc.start();
     osc.stop(now + 0.22);
   } catch(e) {}
 }
 
 // 4. Celebration Fanfare on Quiz Submit
 function playQuizCompleteSound() {
+  if (isMuted) return;
   if (!audioCtx) initAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
 
