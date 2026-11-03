@@ -113,52 +113,70 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
   questions.forEach((q, i) => {
     const res = userResponses[i];
     const isCorrect = res ? res.isCorrect : false;
-    const userAns = res && res.selected ? res.selected : "Not Answered / രേഖപ്പെടുത്തിയിട്ടില്ല";
+    
+    // 1. Localize Default Empty Answer
+    const notAnsweredText = currentLang === "en" ? "Not Answered" : "രേഖപ്പെടുത്തിയിട്ടില്ല";
+    const userAns = res && res.selected ? res.selected : notAnsweredText;
 
     const type = String(q[colIndex.type] || "MCQ").trim().toUpperCase();
     const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
     let correctDisplay = "";
 
+    // 2. Localize True/False and Options
     if (type === "TF") {
-      correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
+      if (currentLang === "en") {
+        correctDisplay = ansKey === "A" ? "True" : "False";
+      } else {
+        correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
+      }
     } else {
       const keyMap = {
-        "A": q[colIndex.optA],
-        "B": q[colIndex.optB],
-        "C": q[colIndex.optC],
-        "D": q[colIndex.optD]
+        "A": getLocalizedText(q, colIndex.optA, colIndex.optA_en),
+        "B": getLocalizedText(q, colIndex.optB, colIndex.optB_en),
+        "C": getLocalizedText(q, colIndex.optC, colIndex.optC_en),
+        "D": getLocalizedText(q, colIndex.optD, colIndex.optD_en)
       };
       correctDisplay = ansKey.split(",").map(k => keyMap[k.trim()] || k.trim()).join(", ");
     }
 
+    // 3. Localize Question & Explanation
+    const qText = getLocalizedText(q, colIndex.question, colIndex.question_en);
     const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || q[11] || "");
-    const exp = (res && res.explanation) ? res.explanation : (q[colIndex.exp] || q[12] || "");
+    const expText = getLocalizedText(q, colIndex.exp, colIndex.exp_en);
 
+    // 4. Localize Labels & Links
+    const yourAnsLabel = currentLang === "en" ? "Your Answer" : "Your Answer";
+    const correctAnsLabel = currentLang === "en" ? "Correct Answer" : "Correct Answer";
+    const refLabel = currentLang === "en" ? "Reference" : "Reference";
+    const expLabel = currentLang === "en" ? "Explanation" : "Explanation";
+    const bibleBtnText = currentLang === "en" ? "📖 Read in Bible ↗" : "📖 Read in Bible ↗";
     const bibleUrl = getBibleLink(q[colIndex.book], ref);
 
     const div = document.createElement("div");
     div.className = `review-item ${isCorrect ? 'pass' : 'fail'}`;
     div.innerHTML = `
-      <div style="font-weight:700; margin-bottom: 6px; font-size: 1rem;">${i + 1}. ${q[colIndex.question]}</div>
+      <div style="font-weight:700; margin-bottom: 6px; font-size: 1rem;">${i + 1}. ${qText}</div>
       <div style="font-size:0.95rem; margin-bottom: 4px;">
-        Your Answer: <strong>${userAns}</strong> ${isCorrect ? '✅' : '❌'}
+        ${yourAnsLabel}: <strong>${userAns}</strong> ${isCorrect ? '✅' : '❌'}
       </div>
       ${!isCorrect ? `
         <div style="font-size:0.95rem; color: var(--correct); font-weight: 600; margin-bottom: 6px;">
-          Correct Answer: ${correctDisplay}
+          ${correctAnsLabel}: ${correctDisplay}
         </div>
       ` : ''}
-      ${(ref || exp) ? `
+      ${(ref || expText) ? `
         <div class="feedback-box">
           ${ref ? `
-            <div style="font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: space-between;">
-              <span>📖 <strong>Reference:</strong> ${ref}</span>
-              <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
-                📖 Read in Bible ↗
-              </a>
+            <div style="font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+              <span>📖 <strong>${refLabel}:</strong> ${ref}</span>
+              ${bibleUrl ? `
+                <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
+                  ${bibleBtnText}
+                </a>
+              ` : ''}
             </div>
           ` : ''}
-          ${exp ? `<div style="margin-top: 6px; line-height: 1.5;">💡 <strong>Explanation:</strong> ${exp}</div>` : ''}
+          ${expText ? `<div style="margin-top: 6px; line-height: 1.5;">💡 <strong>${expLabel}:</strong> ${expText}</div>` : ''}
         </div>
       ` : ''}
     `;
