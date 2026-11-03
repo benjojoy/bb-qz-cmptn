@@ -358,17 +358,33 @@ async function loadAdminMetrics() {
   }
 }
 
-// Function to populate Settings form fields with active Google Sheet settings
 function populateAdminSettingsForm() {
   if (!settings) return;
 
   document.getElementById("admSetTitle").value = settings["quiz title"] || "";
-  document.getElementById("admSetBook").value = settings["book filter"] || "";
+  
+  const bookSelect = document.getElementById("admSetBook");
+  if (bookSelect && settings["book filter"]) {
+    bookSelect.value = settings["book filter"].trim();
+  }
+
+  const rawCategory = String(settings["category filter"] || "").trim();
+  const selectedChapters = rawCategory.toLowerCase() === "all" || !rawCategory
+    ? ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"] // Check all if "All" or empty
+    : rawCategory.split(",").map(c => c.trim().toLowerCase());
+
+  document.querySelectorAll('input[name="chapterFilter"]').forEach(cb => {
+    if (rawCategory.toLowerCase() === "all" || !rawCategory) {
+      cb.checked = true;
+    } else {
+      cb.checked = selectedChapters.includes(cb.value.toLowerCase());
+    }
+  });
+
   document.getElementById("admSetDuration").value = settings["quiz duration minutes"] || 3;
   document.getElementById("admSetEasy").value = settings["easy count"] || 0;
   document.getElementById("admSetMedium").value = settings["medium count"] || 0;
   document.getElementById("admSetHard").value = settings["hard count"] || 0;
-
   document.getElementById("admSetShuffleQ").checked = String(settings["shuffle questions"]).toUpperCase() === "TRUE";
   document.getElementById("admSetShuffleOpt").checked = String(settings["shuffle options"]).toUpperCase() === "TRUE";
   document.getElementById("admSetReqPhone").checked = String(settings["require phone"]).toUpperCase() === "TRUE";
@@ -384,9 +400,21 @@ if (adminSettingsForm) {
     saveBtn.disabled = true;
     saveBtn.innerText = "Saving to Google Sheet...";
 
+    // Collect checked chapters
+    const checkedBoxes = Array.from(document.querySelectorAll('input[name="chapterFilter"]:checked'));
+    let categoryValue = "";
+    if (checkedBoxes.length === 0 || checkedBoxes.length === 13) {
+      // If all or none selected, set to All
+      categoryValue = "All";
+    } else {
+      // Join as comma-separated: e.g. "Chapter 1, Chapter 2"
+      categoryValue = checkedBoxes.map(cb => cb.value).join(", ");
+    }
+
     const updated = {
       "Quiz Title": document.getElementById("admSetTitle").value.trim(),
       "Book Filter": document.getElementById("admSetBook").value.trim(),
+      "Category Filter": categoryValue,
       "Quiz Duration Minutes": document.getElementById("admSetDuration").value,
       "Easy Count": document.getElementById("admSetEasy").value,
       "Medium Count": document.getElementById("admSetMedium").value,
