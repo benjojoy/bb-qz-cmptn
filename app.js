@@ -341,6 +341,7 @@ if (adminSettingsForm) {
 
     try {
       // POST the updated settings to your Apps Script Web App URL
+      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
       await fetch(SCRIPT_URL, {
         method: "POST",
         mode: "no-cors", // Standard for Google Apps Script Web App endpoints
