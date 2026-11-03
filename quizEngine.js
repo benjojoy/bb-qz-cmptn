@@ -54,7 +54,6 @@ function renderQuestion() {
   qTitle.offsetHeight;
   qTitle.style.animation = 'fadeIn 0.35s ease forwards';
   
-  // Pick English or Malayalam question
   qTitle.innerText = getLocalizedText(q, colIndex.question, colIndex.question_en);
 
   const correctKeys = correctRaw.split(",").map(k => k.trim());
@@ -173,7 +172,8 @@ function retakeQuizAction() {
     clearInterval(timerInterval);
     timerInterval = null;
   }
-
+  const header = document.querySelector(".header");
+  if (header) header.classList.remove("hidden");
   document.getElementById("reviewContainer").innerHTML = "";
   document.getElementById("progressBar").style.width = "0%";
 
@@ -181,7 +181,6 @@ function retakeQuizAction() {
     shuffle(questions);
   }
 
-  // Restore Admin Lock Icon on returning to the Start screen
   const adminBtn = document.getElementById("adminBtn");
   if (adminBtn) {
     adminBtn.classList.remove("hidden");
