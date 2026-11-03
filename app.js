@@ -283,12 +283,22 @@ if (adminBtn) {
   });
 
   submitAdminPassBtn.addEventListener("click", () => {
+    if (!adminPassInput.value) {
+      showToast("Please enter the Admin PIN", "error");
+      adminPassInput.focus();
+      return;
+    }
+  
     if (adminPassInput.value === ADMIN_PIN) {
       adminAuthScreen.classList.add("hidden");
       adminDataScreen.classList.remove("hidden");
+      adminPassInput.value = "";
       loadAdminMetrics();
+      populateAdminSettingsForm();
     } else {
-      alert("Invalid Admin PIN");
+      showToast("Incorrect Admin PIN! Please try again.", "error");
+      adminPassInput.value = "";
+      adminPassInput.focus();
     }
   });
 
@@ -365,18 +375,6 @@ function populateAdminSettingsForm() {
   document.getElementById("admSetProgressBar").checked = String(settings["show progress bar"]).toUpperCase() === "TRUE";
 }
 
-// Call populateAdminSettingsForm when admin unlocks the modal
-submitAdminPassBtn.addEventListener("click", () => {
-  if (adminPassInput.value === ADMIN_PIN) {
-    adminAuthScreen.classList.add("hidden");
-    adminDataScreen.classList.remove("hidden");
-    loadAdminMetrics();
-    populateAdminSettingsForm();
-  } else {
-    alert("Invalid Admin PIN");
-  }
-});
-
 // Handle saving updated settings back to Google Sheets
 const adminSettingsForm = document.getElementById("adminSettingsForm");
 if (adminSettingsForm) {
@@ -417,14 +415,37 @@ if (adminSettingsForm) {
         })
       });
 
-      alert("Settings saved successfully! Reloading to apply changes.");
-      window.location.reload();
+      showToast("Settings saved successfully! Reloading to apply changes.", "success");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
     } catch (err) {
-      alert("Error saving settings: " + err.message);
+      showToast("Error saving settings: " + err.message, "error");
       saveBtn.disabled = false;
       saveBtn.innerText = "💾 Save Settings to Google Sheet";
     }
   });
+}
+
+let toastTimeout = null;
+function showToast(message, type = "error") {
+  const toast = document.getElementById("toastNotification");
+  if (!toast) return;
+
+  // Clear previous timer if called rapidly
+  if (toastTimeout) clearTimeout(toastTimeout);
+
+  const icon = type === "success" ? "✅" : "⚠️";
+  toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+  toast.className = `toast ${type}`;
+
+  // Make visible
+  toast.classList.remove("hidden");
+
+  // Auto-dismiss after 3.2 seconds
+  toastTimeout = setTimeout(() => {
+    toast.classList.add("hidden");
+  }, 3200);
 }
 
 initApp();
