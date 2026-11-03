@@ -97,7 +97,7 @@ function getBibleLink(bookName, ref) {
   return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
 }
 
-function showQuizResults(questions, userResponses, settings, colIndex) {
+async function showQuizResults(questions, userResponses, settings, colIndex) {
   const header = document.querySelector(".header");
   if (header) header.classList.add("hidden");
   document.getElementById("progressBar").style.width = "100%";
