@@ -109,34 +109,36 @@ if (shareWhatsAppBtn) {
               `🎯 *Score:* ${scoreText} (${percentText})\n\n` +
               `*Review Answers:*\n\n`;
 
-    // Loop through each question to append full Q&A breakdown
     questions.forEach((q, i) => {
       const res = userResponses[i];
       const isCorrect = res ? res.isCorrect : false;
-      const userAns = res && res.selected ? res.selected : "Not Answered";
+      const notAnsweredText = currentLang === "en" ? "Not Answered" : "രേഖപ്പെടുത്തിയിട്ടില്ല";
+      const userAns = res && res.selected ? res.selected : notAnsweredText;
       const icon = isCorrect ? "✅" : "❌";
 
-      // Answers, References & Explanations
       const type = String(q[colIndex.type] || "MCQ").trim().toUpperCase();
       const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
       let correctDisplay = "";
 
       if (type === "TF") {
-        correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
+        correctDisplay = currentLang === "en" 
+          ? (ansKey === "A" ? "True" : "False") 
+          : (ansKey === "A" ? "ശരി" : "തെറ്റ്");
       } else {
         const keyMap = {
-          "A": q[colIndex.optA],
-          "B": q[colIndex.optB],
-          "C": q[colIndex.optC],
-          "D": q[colIndex.optD]
+          "A": getLocalizedText(q, colIndex.optA, colIndex.optA_en),
+          "B": getLocalizedText(q, colIndex.optB, colIndex.optB_en),
+          "C": getLocalizedText(q, colIndex.optC, colIndex.optC_en),
+          "D": getLocalizedText(q, colIndex.optD, colIndex.optD_en)
         };
         correctDisplay = ansKey.split(",").map(k => keyMap[k.trim()] || k.trim()).join(", ");
       }
 
+      const qText = getLocalizedText(q, colIndex.question, colIndex.question_en);
       const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || "");
-      const exp = (res && res.explanation) ? res.explanation : (q[colIndex.exp] || "");
+      const exp = getLocalizedText(q, colIndex.exp, colIndex.exp_en);
 
-      msg += `${i + 1}. ${q[colIndex.question]}\n`;
+      msg += `${i + 1}. ${qText}\n`;
       msg += `Your Answer: ${userAns} ${icon}\n`;
       if (!isCorrect) {
         msg += `Correct Answer: ${correctDisplay}\n`;
@@ -147,7 +149,7 @@ if (shareWhatsAppBtn) {
       if (exp) {
         msg += `💡 Explanation: ${exp}\n`;
       }
-      msg += `\n`; // Spacing between questions
+      msg += `\n`;
     });
 
     const encodedMsg = encodeURIComponent(msg.trim());
