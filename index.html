@@ -252,47 +252,88 @@
     }
 
     /* Dark Mode Palette Variables */
-    body.dark-mode {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --border: #334155;
-    }
-    
-    /* Adjustments for inputs, modals, and elements in Dark Mode */
-    body.dark-mode input,
-    body.dark-mode select {
-      background-color: #0f172a !important;
-      color: #f8fafc !important;
-      border-color: #334155 !important;
-    }
-    
-    body.dark-mode .header button,
-    body.dark-mode #langSelect {
-      background-color: #1e293b !important;
-      color: #f8fafc !important;
-      border-color: #334155 !important;
-    }
-    
-    body.dark-mode .feedback-box {
-      background-color: #0f172a !important;
-      border-color: #334155 !important;
-      color: #e2e8f0 !important;
-    }
-    
-    body.dark-mode .score-card {
-      background-color: #1e293b !important;
-    }
-    
-    body.dark-mode #adminModal > div {
-      background-color: #1e293b !important;
-      color: #f8fafc !important;
-    }
-    
-    body.dark-mode #adminModal div[style*="background:#f1f5f9"] {
-      background: #0f172a !important;
-    }
+body.dark-mode {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: #334155;
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* Card & Screen Containers */
+body.dark-mode .container,
+body.dark-mode .card,
+body.dark-mode #quizScreen,
+body.dark-mode #startScreen,
+body.dark-mode #resultScreen {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+}
+
+/* Question Title & Meta */
+body.dark-mode #qTitle,
+body.dark-mode .question-title {
+  color: #f8fafc !important;
+}
+
+body.dark-mode #qMeta {
+  color: #818cf8 !important; /* Soft indigo for visibility */
+}
+
+/* Option Buttons */
+body.dark-mode .option-btn {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Selected Option State */
+body.dark-mode .option-btn.selected {
+  background-color: #312e81 !important;
+  border-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+/* Top Header & Buttons */
+body.dark-mode .header {
+  background-color: var(--bg) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+body.dark-mode .header button {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Inputs & Dropdowns */
+body.dark-mode input,
+body.dark-mode select {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Review Cards on Results Screen */
+body.dark-mode .review-item {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body.dark-mode .feedback-box {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-mode .score-card {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
   </style>
 </head>
 <body>
