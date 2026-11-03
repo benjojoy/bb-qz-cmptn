@@ -1,5 +1,21 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
+function displayMobileError(err) {
+  let errBox = document.getElementById("mobileErrorBox");
+  if (!errBox) {
+    errBox = document.createElement("div");
+    errBox.id = "mobileErrorBox";
+    errBox.style.cssText = "position:fixed;top:10px;left:10px;right:10px;background:#fee2e2;color:#991b1b;border:2px solid #ef4444;padding:12px;border-radius:8px;font-size:12px;z-index:999999;word-break:break-all;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.2);";
+    document.body.appendChild(errBox);
+  }
+  errBox.innerHTML = `<strong>⚠️ JS Error:</strong><br>${err.message || err}<br><br><small>${err.stack || ''}</small>`;
+}
+
+// Intercept unhandled promise/syntax rejections on mobile
+window.addEventListener("error", (e) => displayMobileError(e.error || e.message));
+window.addEventListener("unhandledrejection", (e) => displayMobileError(e.reason));
+
+
 // 1. Generate or retrieve a persistent Device ID for this browser
 function getOrCreateDeviceId() {
   // 1. Maintain a persistent unique ID across tests on the same phone
@@ -98,6 +114,7 @@ function getBibleLink(bookName, ref) {
 }
 
 async function showQuizResults(questions, userResponses, settings, colIndex) {
+  try {
   const header = document.querySelector(".header");
   if (header) header.classList.add("hidden");
   document.getElementById("progressBar").style.width = "100%";
@@ -251,6 +268,9 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
     `;
     review.appendChild(div);
   });
+  } catch (fatalErr) {
+    displayMobileError(fatalErr);
+  }
 }
 
 
