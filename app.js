@@ -154,4 +154,124 @@ if (shareWhatsAppBtn) {
   });
 }
 
+// -------------------------------------------------------------
+// 1. Mute Toggle Wiring
+// -------------------------------------------------------------
+const muteBtn = document.getElementById("muteBtn");
+if (muteBtn) {
+  muteBtn.innerText = getMuteState() ? "🔇" : "🔊";
+  muteBtn.addEventListener("click", () => {
+    const muted = toggleMute();
+    muteBtn.innerText = muted ? "🔇" : "🔊";
+  });
+}
+
+// -------------------------------------------------------------
+// 2. Malayalam Font Size Toggle (A+ / A-)
+// -------------------------------------------------------------
+let currentFontSize = parseInt(localStorage.getItem("quiz_font_size")) || 100;
+function applyFontSize(sizePercent) {
+  currentFontSize = Math.min(Math.max(sizePercent, 85), 135);
+  localStorage.setItem("quiz_font_size", currentFontSize);
+  
+  // Scales question titles, options and descriptions
+  document.querySelectorAll(".question-title, .option-btn, .review-item, p.desc").forEach(el => {
+    el.style.fontSize = `${(currentFontSize / 100) * 1.05}rem`;
+  });
+}
+
+const fontDecBtn = document.getElementById("fontDecBtn");
+const fontIncBtn = document.getElementById("fontIncBtn");
+if (fontDecBtn && fontIncBtn) {
+  fontDecBtn.addEventListener("click", () => applyFontSize(currentFontSize - 10));
+  fontIncBtn.addEventListener("click", () => applyFontSize(currentFontSize + 10));
+}
+
+// -------------------------------------------------------------
+// 3. Passcode Protected Admin Dashboard
+// -------------------------------------------------------------
+const ADMIN_PIN = "4753"; // Set your desired 4-digit admin PIN
+const adminBtn = document.getElementById("adminBtn");
+const adminModal = document.getElementById("adminModal");
+const closeAdminBtn = document.getElementById("closeAdminBtn");
+const submitAdminPassBtn = document.getElementById("submitAdminPassBtn");
+const adminPassInput = document.getElementById("adminPassInput");
+const adminAuthScreen = document.getElementById("adminAuthScreen");
+const adminDataScreen = document.getElementById("adminDataScreen");
+const refreshAdminBtn = document.getElementById("refreshAdminBtn");
+
+if (adminBtn) {
+  adminBtn.addEventListener("click", () => {
+    adminModal.classList.remove("hidden");
+  });
+  closeAdminBtn.addEventListener("click", () => {
+    adminModal.classList.add("hidden");
+  });
+
+  submitAdminPassBtn.addEventListener("click", () => {
+    if (adminPassInput.value === ADMIN_PIN) {
+      adminAuthScreen.classList.add("hidden");
+      adminDataScreen.classList.remove("hidden");
+      loadAdminMetrics();
+    } else {
+      alert("Invalid Admin PIN");
+    }
+  });
+
+  if (refreshAdminBtn) {
+    refreshAdminBtn.addEventListener("click", loadAdminMetrics);
+  }
+}
+
+async function loadAdminMetrics() {
+  document.getElementById("admTotalAttempts").innerText = "...";
+  document.getElementById("admAvgScore").innerText = "...";
+  document.getElementById("admTopPerformers").innerHTML = "Loading...";
+
+  try {
+    const responses = await fetchSheetData("Responses");
+    if (!responses || responses.length <= 1) {
+      document.getElementById("admTotalAttempts").innerText = "0";
+      document.getElementById("admAvgScore").innerText = "0%";
+      document.getElementById("admTopPerformers").innerHTML = "No responses recorded yet.";
+      return;
+    }
+
+    const rows = responses.slice(1); // skip header
+    const total = rows.length;
+    let totalScore = 0;
+    let totalPossible = 0;
+
+    // Header index expectations: 0: Timestamp, 1: Name, 2: Phone, 3: Score, 4: Total
+    let leaderboard = [];
+
+    rows.forEach(r => {
+      const name = r[1] || "Anonymous";
+      const score = Number(r[3]) || 0;
+      const possible = Number(r[4]) || 5;
+      totalScore += score;
+      totalPossible += possible;
+      leaderboard.push({ name, score, possible, percent: Math.round((score / possible) * 100) });
+    });
+
+    const avg = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+    document.getElementById("admTotalAttempts").innerText = total;
+    document.getElementById("admAvgScore").innerText = `${avg}%`;
+
+    // Top 5 performers sorted by score descending
+    leaderboard.sort((a, b) => b.score - a.score || b.percent - a.percent);
+    const top5 = leaderboard.slice(0, 5);
+
+    let html = "<ol style='padding-left: 20px; margin: 0;'>";
+    top5.forEach(p => {
+      html += `<li style='margin-bottom: 6px;'><strong>${p.name}</strong> — ${p.score}/${p.possible} (${p.percent}%)</li>`;
+    });
+    html += "</ol>";
+
+    document.getElementById("admTopPerformers").innerHTML = html;
+  } catch (err) {
+    document.getElementById("admTopPerformers").innerHTML = `<span style="color:red">Failed to read Responses tab: ${err.message}</span>`;
+  }
+}
+
 initApp();
