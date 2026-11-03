@@ -112,26 +112,30 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const accuracyStr = `${percent}%`;
 
-  // Fetch Device ID, IP & Location
+  // Fetch Device ID immediately (synchronous / local)
   const deviceId = getOrCreateDeviceId();
-  const netInfo = await fetchClientNetworkInfo();
+  const participantName = document.getElementById("nameInput").value.trim();
+  const participantPhone = document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "";
 
+  // Background logging: fetch network details without blocking the UI
   if (SUBMIT_API_URL) {
-    fetch(SUBMIT_API_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: document.getElementById("nameInput").value.trim(),
-        phone: document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "",
-        score: score,
-        total: total,
-        accuracy: accuracyStr,
-        deviceId: deviceId,
-        ipAddress: netInfo.ip,
-        location: netInfo.location
-      })
-    }).catch(err => console.error("Could not record response:", err));
+    fetchClientNetworkInfo().then(netInfo => {
+      fetch(SUBMIT_API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: participantName,
+          phone: participantPhone,
+          score: score,
+          total: total,
+          accuracy: accuracyStr,
+          deviceId: deviceId,
+          ipAddress: netInfo.ip,
+          location: netInfo.location
+        })
+      }).catch(err => console.error("Could not record response:", err));
+    }).catch(err => console.error("Network info error:", err));
   }
 
   let congratsHeader = "";
@@ -163,7 +167,7 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
       ${congratsHeader}
     </div>
     <p style="font-weight: 700; font-size: 1.05rem; margin-bottom: 4px;">
-      ${document.getElementById("nameInput").value.trim()}
+      ${participantName}
     </p>
     <div style="margin: 10px 0 14px 0; padding: 10px 14px; background: #f1f5f9; border-radius: 8px; font-size: 0.95rem; line-height: 1.5; color: #334155;">
       ${excellenceNote}
@@ -248,3 +252,5 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
     review.appendChild(div);
   });
 }
+
+
