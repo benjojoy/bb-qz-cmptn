@@ -82,8 +82,13 @@ async function loadQuizData() {
   });
 
   const targetBook = (settings["book filter"] || settings["book"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
-  const targetCategory = (settings["category filter"] || settings["category"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
   const targetDifficulty = (settings["difficulty filter"] || settings["difficulty"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
+
+  // Parse comma-separated Category/Chapter filter
+  const rawCatFilter = String(settings["category filter"] || settings["category"] || "ALL").trim().toLowerCase();
+  const allowedCategories = (rawCatFilter && rawCatFilter !== "all")
+    ? rawCatFilter.split(",").map(c => c.trim().toLowerCase()).filter(Boolean)
+    : [];
 
   // Map column headers
   const headerRow = (rawQuestions[0] || []).map(c => String(c || "").trim().toLowerCase());
@@ -114,14 +119,21 @@ async function loadQuizData() {
 
   let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
 
+  // Apply Book filter
   if (targetBook !== "ALL" && targetBook !== "") {
     pool = pool.filter(r => String(r[colIndex.book] || "").replace(/\s+/g, " ").trim().toUpperCase() === targetBook);
   }
 
-  if (targetCategory !== "ALL" && targetCategory !== "") {
-    pool = pool.filter(r => String(r[colIndex.category] || "").replace(/\s+/g, " ").trim().toUpperCase() === targetCategory);
+  // Apply Multi-Chapter / Category filter
+  if (allowedCategories.length > 0) {
+    pool = pool.filter(r => {
+      const qCategory = String(r[colIndex.category] || "").trim().toLowerCase();
+      if (!qCategory) return false;
+      return allowedCategories.some(cat => qCategory.includes(cat) || cat.includes(qCategory));
+    });
   }
 
+  // Apply Difficulty filter
   if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
     pool = pool.filter(r => String(r[colIndex.diff] || "").replace(/\s+/g, " ").trim().toUpperCase() === targetDifficulty);
   }
