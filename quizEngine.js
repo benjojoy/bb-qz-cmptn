@@ -40,29 +40,41 @@ function renderQuestion() {
 
   const percent = ((currentIndex) / questions.length) * 100;
   document.getElementById("progressBar").style.width = `${percent}%`;
-  document.getElementById("progressText").innerText = `Question ${currentIndex + 1} of ${questions.length}`;
   
-  document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? ' (Select all that apply)' : ''}`;
+  const qProgressLabel = currentLang === "en" 
+    ? `Question ${currentIndex + 1} of ${questions.length}` 
+    : `ചോദ്യം ${currentIndex + 1} / ${questions.length}`;
+  document.getElementById("progressText").innerText = qProgressLabel;
+  
+  const multiLabel = currentLang === "en" ? " (Select all that apply)" : " (ശരിയായവയെല്ലാം തിരഞ്ഞെടുക്കുക)";
+  document.getElementById("qMeta").innerText = `${q[colIndex.book] || ''}${isMultiple ? multiLabel : ''}`;
   
   const qTitle = document.getElementById("qTitle");
   qTitle.style.animation = 'none';
   qTitle.offsetHeight;
   qTitle.style.animation = 'fadeIn 0.35s ease forwards';
-  qTitle.innerText = q[colIndex.question];
+  
+  // Pick English or Malayalam question
+  qTitle.innerText = getLocalizedText(q, colIndex.question, colIndex.question_en);
 
   const correctKeys = correctRaw.split(",").map(k => k.trim());
 
   let options = [];
   if (type === "TF") {
     options = [
-      { key: "A", label: "ശരി", correct: correctKeys.includes("A") },
-      { key: "B", label: "തെറ്റ്", correct: correctKeys.includes("B") }
+      { key: "A", label: currentLang === "en" ? "True" : "ശരി", correct: correctKeys.includes("A") },
+      { key: "B", label: currentLang === "en" ? "False" : "തെറ്റ്", correct: correctKeys.includes("B") }
     ];
   } else {
-    if (q[colIndex.optA]) options.push({ key: "A", label: String(q[colIndex.optA]), correct: correctKeys.includes("A") });
-    if (q[colIndex.optB]) options.push({ key: "B", label: String(q[colIndex.optB]), correct: correctKeys.includes("B") });
-    if (q[colIndex.optC]) options.push({ key: "C", label: String(q[colIndex.optC]), correct: correctKeys.includes("C") });
-    if (q[colIndex.optD]) options.push({ key: "D", label: String(q[colIndex.optD]), correct: correctKeys.includes("D") });
+    const textA = getLocalizedText(q, colIndex.optA, colIndex.optA_en);
+    const textB = getLocalizedText(q, colIndex.optB, colIndex.optB_en);
+    const textC = getLocalizedText(q, colIndex.optC, colIndex.optC_en);
+    const textD = getLocalizedText(q, colIndex.optD, colIndex.optD_en);
+
+    if (textA) options.push({ key: "A", label: textA, correct: correctKeys.includes("A") });
+    if (textB) options.push({ key: "B", label: textB, correct: correctKeys.includes("B") });
+    if (textC) options.push({ key: "C", label: textC, correct: correctKeys.includes("C") });
+    if (textD) options.push({ key: "D", label: textD, correct: correctKeys.includes("D") });
   }
 
   if (String(settings["shuffle options"]).toUpperCase() === "TRUE") {
