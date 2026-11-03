@@ -42,7 +42,7 @@ function renderQuestion() {
   document.getElementById("progressBar").style.width = `${percent}%`;
   
   const qProgressLabel = currentLang === "en" 
-    ? `Question ${currentIndex + 1} of ${questions.length}` 
+    ? `Qstn ${currentIndex + 1} / ${questions.length}` 
     : `ചോദ്യം ${currentIndex + 1} / ${questions.length}`;
   document.getElementById("progressText").innerText = qProgressLabel;
   
