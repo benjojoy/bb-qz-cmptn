@@ -46,7 +46,7 @@ if (themeToggleBtn) {
 // -------------------------------------------------------------
 function validateName(name) {
   // Allows English letters, Malayalam unicode script (\u0D00-\u0D7F), dots, and spaces. Min 2 characters.
-  const nameRegex = /^[A-Za-z\u0D00-\u0D7F\s.]{2,50}$/;
+  const nameRegex = /^[A-Za-z\u0D00-\u0D7F\s.]{3,50}$/;
   return nameRegex.test(name.trim());
 }
 
