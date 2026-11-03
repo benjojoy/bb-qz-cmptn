@@ -291,7 +291,14 @@
       <p id="scorePercent" style="font-weight: 600;"></p>
     </div>
     
-    <button class="btn" id="retakeBtn" style="margin-top: 0; margin-bottom: 24px; background: #334155;">🔄 Retake Quiz / വീണ്ടും ചെയ്യുക</button>
+    <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+      <button class="btn" id="retakeBtn" style="margin-top: 0; flex: 1; background: #334155;">
+        🔄 Retake / വീണ്ടും ചെയ്യുക
+      </button>
+      <button class="btn" id="refreshBtn" style="margin-top: 0; flex: 1; background: var(--primary);">
+        ⚡ Refresh / പുതിയ ചോദ്യങ്ങൾ
+      </button>
+    </div>
 
     <h3 style="margin-bottom: 14px; font-size: 1.1rem;">Review Answers</h3>
     <div id="reviewContainer"></div>
