@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manjari:wght@400;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     :root {
       --bg: #f8fafc;
@@ -124,7 +125,12 @@
 
     .input-group { margin-bottom: 20px; }
     label { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
-    input[type="text"] {
+    
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    select {
       width: 100%;
       padding: 14px 16px;
       border: 1.5px solid var(--border);
@@ -132,8 +138,10 @@
       font-size: 1.05rem;
       font-family: inherit;
       outline: none;
+      background: #ffffff;
+      color: var(--text);
     }
-    input[type="text"]:focus { border-color: var(--primary); }
+    input:focus, select:focus { border-color: var(--primary); }
 
     .q-meta {
       font-size: 0.85rem;
@@ -260,7 +268,7 @@
       background: #1e293b;
       color: #ffffff;
       padding: 10px 18px;
-      border-radius: 9999px; /* Pill shape looks cleaner for single-line toasts */
+      border-radius: 9999px;
       font-size: 0.88rem;
       font-weight: 600;
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
@@ -268,14 +276,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      
-      /* Enforce single line */
       white-space: nowrap;
       width: max-content;
       max-width: 90vw;
       overflow: hidden;
       text-overflow: ellipsis;
-    
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
     }
@@ -296,7 +301,141 @@
       pointer-events: none;
     }
 
-    /* Dark Mode Palette Variables */
+    /* =========================================================
+       Admin Configuration Form Styling
+       ========================================================= */
+    .admin-config-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .admin-config-form .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .admin-config-form label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .admin-config-form input[type="text"],
+    .admin-config-form input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #f8fafc;
+      box-sizing: border-box;
+    }
+
+    .admin-config-form input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #ffffff;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .config-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .config-card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .diff-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .diff-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .diff-tag.easy { background: #dcfce7; color: #15803d; }
+    .diff-tag.med  { background: #fef3c7; color: #b45309; }
+    .diff-tag.hard { background: #fee2e2; color: #b91c1c; }
+
+    .diff-box input {
+      width: 100% !important;
+      text-align: center;
+      font-size: 1.05rem !important;
+      font-weight: 700;
+      padding: 4px !important;
+      border: 1px solid #e2e8f0 !important;
+      background: #ffffff !important;
+    }
+
+    .toggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .toggle-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.82rem !important;
+      font-weight: 600 !important;
+      color: var(--text) !important;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      margin-bottom: 0 !important;
+    }
+
+    .toggle-chip input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       Dark Mode Overrides
+       ========================================================= */
     body.dark-mode {
       --bg: #0f172a;
       --card-bg: #1e293b;
@@ -307,41 +446,37 @@
       color: var(--text) !important;
     }
     
-    /* Card & Screen Containers */
     body.dark-mode .container,
     body.dark-mode .card,
     body.dark-mode #quizScreen,
     body.dark-mode #startScreen,
-    body.dark-mode #resultScreen {
+    body.dark-mode #resultScreen,
+    body.dark-mode #adminModal > div {
       background-color: var(--card-bg) !important;
       color: var(--text) !important;
     }
     
-    /* Question Title & Meta */
     body.dark-mode #qTitle,
     body.dark-mode .question-title {
       color: #f8fafc !important;
     }
     
     body.dark-mode #qMeta {
-      color: #818cf8 !important; /* Soft indigo for visibility */
+      color: #818cf8 !important;
     }
     
-    /* Option Buttons */
     body.dark-mode .option-btn {
       background-color: #0f172a !important;
       color: #f8fafc !important;
       border-color: #334155 !important;
     }
     
-    /* Selected Option State */
     body.dark-mode .option-btn.selected {
       background-color: #312e81 !important;
       border-color: #6366f1 !important;
       color: #ffffff !important;
     }
     
-    /* Top Header & Buttons */
     body.dark-mode .header {
       background-color: var(--bg) !important;
       border-bottom-color: var(--border) !important;
@@ -353,7 +488,6 @@
       border-color: #334155 !important;
     }
     
-    /* Inputs & Dropdowns */
     body.dark-mode input,
     body.dark-mode select {
       background-color: #0f172a !important;
@@ -361,7 +495,6 @@
       border-color: #334155 !important;
     }
     
-    /* Review Cards on Results Screen */
     body.dark-mode .review-item {
       background-color: #1e293b !important;
       color: #f8fafc !important;
@@ -379,7 +512,23 @@
       color: #f8fafc !important;
     }
 
-  </style>
+    body.dark-mode .config-card {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+    }
+
+    body.dark-mode .diff-box,
+    body.dark-mode .toggle-chip {
+      background: #1e293b !important;
+      border-color: #334155 !important;
+    }
+
+    body.dark-mode .diff-box input {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      color: #f8fafc !important;
+    }
+</style>
 </head>
 <body>
 
@@ -524,58 +673,74 @@
 
         <button id="refreshAdminBtn" class="btn" style="margin-top:10px; background:#475569; padding:10px;">🔄 Refresh Metrics</button>
 
-        <!-- Settings Editor Section inside #adminDataScreen -->
-        <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
-        <h4 style="margin: 0 0 12px 0;">⚙️ Live Quiz Configuration</h4>
+        <!-- Modern Live Quiz Configuration Section -->
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0 16px 0;">
+        <h4 style="margin: 0 0 14px 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+          ⚙️ <span>Live Quiz Configuration</span>
+        </h4>
 
-        <form id="adminSettingsForm" style="display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem;">
-          <div>
-            <label style="font-weight:600; display:block; margin-bottom:4px;">Quiz Title</label>
-            <input type="text" id="admSetTitle" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+        <form id="adminSettingsForm" class="admin-config-form">
+          <!-- Quiz Title -->
+          <div class="form-field">
+            <label for="admSetTitle">Quiz Title</label>
+            <input type="text" id="admSetTitle" placeholder="e.g. 2 Corinthians Quiz">
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div>
-              <label style="font-weight:600; display:block; margin-bottom:4px;">Book Filter</label>
-              <input type="text" id="admSetBook" placeholder="e.g. 2 Corinthians" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+          <!-- Book & Duration (2 equal columns) -->
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="admSetBook">Book Filter</label>
+              <input type="text" id="admSetBook" placeholder="2 Corinthians">
             </div>
-            <div>
-              <label style="font-weight:600; display:block; margin-bottom:4px;">Duration (Minutes)</label>
-              <input type="number" id="admSetDuration" min="1" max="120" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
-            </div>
-          </div>
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-            <div>
-              <label style="font-weight:600; display:block; margin-bottom:4px;">Easy Count</label>
-              <input type="number" id="admSetEasy" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
-            </div>
-            <div>
-              <label style="font-weight:600; display:block; margin-bottom:4px;">Medium Count</label>
-              <input type="number" id="admSetMedium" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
-            </div>
-            <div>
-              <label style="font-weight:600; display:block; margin-bottom:4px;">Hard Count</label>
-              <input type="number" id="admSetHard" min="0" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px;">
+            <div class="form-field">
+              <label for="admSetDuration">Duration (Mins)</label>
+              <input type="number" id="admSetDuration" min="1" max="120" placeholder="3">
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="admSetShuffleQ"> Shuffle Questions
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="admSetShuffleOpt"> Shuffle Options
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="admSetReqPhone"> Require Phone
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="admSetProgressBar"> Progress Bar
-            </label>
+          <!-- Difficulty Distribution Card -->
+          <div class="config-card">
+            <div class="config-card-title">Difficulty Distribution</div>
+            <div class="difficulty-grid">
+              <div class="diff-box">
+                <span class="diff-tag easy">Easy</span>
+                <input type="number" id="admSetEasy" min="0" value="10">
+              </div>
+              <div class="diff-box">
+                <span class="diff-tag med">Medium</span>
+                <input type="number" id="admSetMedium" min="0" value="3">
+              </div>
+              <div class="diff-box">
+                <span class="diff-tag hard">Hard</span>
+                <input type="number" id="admSetHard" min="0" value="2">
+              </div>
+            </div>
           </div>
 
-          <button type="submit" id="saveSettingsBtn" class="btn" style="margin-top:14px; background:var(--primary);">
+          <!-- Toggles & Options Card -->
+          <div class="config-card">
+            <div class="config-card-title">Quiz Behavior</div>
+            <div class="toggle-grid">
+              <label class="toggle-chip">
+                <input type="checkbox" id="admSetShuffleQ">
+                <span>Shuffle Questions</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="admSetShuffleOpt">
+                <span>Shuffle Options</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="admSetReqPhone">
+                <span>Require Phone</span>
+              </label>
+              <label class="toggle-chip">
+                <input type="checkbox" id="admSetProgressBar">
+                <span>Progress Bar</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" id="saveSettingsBtn" class="btn" style="margin-top: 8px; width: 100%; padding: 12px; font-weight: 700; border-radius: 10px;">
             💾 Save Settings to Google Sheet
           </button>
         </form>
