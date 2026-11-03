@@ -30,6 +30,9 @@ function getBibleLink(bookName, ref) {
   const chapter = refParts[0] || "1";
   const verse = refParts[1] ? refParts[1].split("-")[0] : "1";
 
+  if (currentLang === "en") {
+    return `https://www.bible.com/bible/59/${code}.${chapter}.${verse}.ESV`;
+  }
   // MALOVBSI (Malayalam Bible Version 1693 on Bible.com)
   return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
 }
@@ -151,7 +154,7 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
             <div style="font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: space-between;">
               <span>📖 <strong>Reference:</strong> ${ref}</span>
               <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
-                📖 Open in Malayalam Bible ↗
+                📖 Read in Bible ↗
               </a>
             </div>
           ` : ''}
