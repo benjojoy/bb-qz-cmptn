@@ -181,6 +181,12 @@ function retakeQuizAction() {
     shuffle(questions);
   }
 
+  // Restore Admin Lock Icon on returning to the Start screen
+  const adminBtn = document.getElementById("adminBtn");
+  if (adminBtn) {
+    adminBtn.classList.remove("hidden");
+  }
+
   document.getElementById("resultScreen").classList.add("hidden");
   document.getElementById("startScreen").classList.remove("hidden");
   document.getElementById("startBtn").disabled = false;
