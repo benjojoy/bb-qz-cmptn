@@ -1,53 +1,11 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
-// 1. Generate or retrieve a persistent Device ID for this browser
-function getOrCreateDeviceId() {
-  let uniqueId = localStorage.getItem("quiz_device_uid");
-  if (!uniqueId) {
-    uniqueId = "DEV-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).slice(-4).toUpperCase();
-    localStorage.setItem("quiz_device_uid", uniqueId);
-  }
-
-  let deviceModel = "Unknown Device";
-  const ua = navigator.userAgent;
-  if (/iPhone/i.test(ua)) deviceModel = "Apple iPhone";
-  else if (/iPad/i.test(ua)) deviceModel = "Apple iPad";
-  else if (/Android/i.test(ua)) {
-    const match = ua.match(/Android\s([0-9.]+);?\s?([^;]+)\sBuild/i);
-    deviceModel = match && match[2] ? match[2].trim() : "Android Device";
-  } else if (/Windows/i.test(ua)) {
-    deviceModel = "Windows PC";
-  } else if (/Macintosh/i.test(ua)) {
-    deviceModel = "Mac";
-  }
-
-  return `${deviceModel} (${uniqueId})`;
-}
-
-// 2. Fetch IP and rough location asynchronously
-async function fetchClientNetworkInfo() {
-  try {
-    const res = await fetch("https://ipapi.co/json/");
-    if (!res.ok) throw new Error("Network response failed");
-    const data = await res.json();
-    return {
-      ip: data.ip || "Unknown",
-      location: [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Unknown"
-    };
-  } catch (err) {
-    return {
-      ip: "Unavailable",
-      location: "Unavailable"
-    };
-  }
-}
-
 function getBibleLink(bookName, ref) {
   if (!ref) return "";
   
   const bookCodes = {
     "GENESIS": "GEN", "EXODUS": "EXO", "LEVITICUS": "LEV", "NUMBERS": "NUM", "DEUTERONOMY": "DEU",
-    "JOSHUA": "JOS", "JUDGES": "JDG", "RUTH": "RUT", "1 SAMUEL": "1SA", "2 SAMUEL": "2SA",
+    "JOSHUA": "JDG", "JUDGES": "JDG", "RUTH": "RUT", "1 SAMUEL": "1SA", "2 SAMUEL": "2SA",
     "1 KINGS": "1KI", "2 KINGS": "2KI", "1 CHRONICLES": "1CH", "2 CHRONICLES": "2CH",
     "EZRA": "EZR", "NEHEMIAH": "NEH", "ESTHER": "EST", "JOB": "JOB", "PSALMS": "PSA", "PROVERBS": "PRO",
     "ECCLESIASTES": "ECC", "SONG OF SOLOMON": "SNG", "ISAIAH": "ISA", "JEREMIAH": "JER",
@@ -90,29 +48,23 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const accuracyStr = `${percent}%`;
 
-  const deviceId = getOrCreateDeviceId();
   const participantName = document.getElementById("nameInput").value.trim();
   const participantPhone = document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "";
 
-  // Background logging using Promise .then (no invalid await)
+  // Direct, clean submission to Google Sheets
   if (SUBMIT_API_URL) {
-    fetchClientNetworkInfo().then(netInfo => {
-      fetch(SUBMIT_API_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: participantName,
-          phone: participantPhone,
-          score: score,
-          total: total,
-          accuracy: accuracyStr,
-          deviceId: deviceId,
-          ipAddress: netInfo.ip,
-          location: netInfo.location
-        })
-      }).catch(err => console.error("Could not record response:", err));
-    }).catch(err => console.error("Network info error:", err));
+    fetch(SUBMIT_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: participantName,
+        phone: participantPhone,
+        score: score,
+        total: total,
+        accuracy: accuracyStr
+      })
+    }).catch(err => console.error("Could not record response:", err));
   }
 
   let congratsHeader = "";
