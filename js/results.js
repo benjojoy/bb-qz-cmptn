@@ -23,14 +23,30 @@ function getBibleLink(bookName, ref) {
   const cleanBook = String(bookName || "").trim().toUpperCase();
   const code = bookCodes[cleanBook] || "2CO";
 
-  const refParts = ref.replace(/[^0-9:-]/g, "").split(":");
-  const chapter = refParts[0] || "1";
-  const verse = refParts[1] ? refParts[1].split("-")[0] : "1";
+  // 1. Separate Chapter and Verse section
+  const colonParts = ref.split(":");
+  const chapter = (colonParts[0] || "").replace(/[^0-9]/g, "") || "1";
+
+  // 2. Extract all verse numbers
+  const versePartStr = colonParts[1] ? colonParts[1].trim() : "1";
+  const matchedNumbers = versePartStr.match(/\d+/g);
+
+  let formattedVerse = "1";
+  if (matchedNumbers && matchedNumbers.length > 0) {
+    if (matchedNumbers.length === 1) {
+      formattedVerse = matchedNumbers[0];
+    } else {
+      // Takes lowest and highest to form a proper Bible.com range
+      const first = matchedNumbers[0];
+      const last = matchedNumbers[matchedNumbers.length - 1];
+      formattedVerse = `${first}-${last}`;
+    }
+  }
 
   if (currentLang === "en") {
-    return `https://www.bible.com/bible/59/${code}.${chapter}.${verse}.ESV`;
+    return `https://www.bible.com/bible/59/${code}.${chapter}.${formattedVerse}.ESV`;
   }
-  return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
+  return `https://www.bible.com/bible/1693/${code}.${chapter}.${formattedVerse}.MALOVBSI`;
 }
 
 function showQuizResults(questions, userResponses, settings, colIndex) {
