@@ -182,7 +182,7 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
             <div style="font-weight: 600; color: #4338ca; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
               <span>📖 <strong>${refLabel}:</strong> ${ref}</span>
               ${bibleUrl ? `
-                <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
+                <a href="${bibleUrl}" target="_blank" rel="noopener noreferrer external" style="font-size: 0.85rem; background: #e0e7ff; color: #4338ca; padding: 3px 8px; border-radius: 6px; text-decoration: none; font-weight: 700;">
                   ${bibleBtnText}
                 </a>
               ` : ''}
@@ -194,4 +194,8 @@ function showQuizResults(questions, userResponses, settings, colIndex) {
     `;
     review.appendChild(div);
   });
+  // At the end of showQuizResults():
+ sessionStorage.setItem("quiz_review_active", "true");
+ sessionStorage.setItem("quiz_cached_responses", JSON.stringify(userResponses));
+  
 }
