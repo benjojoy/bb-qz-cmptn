@@ -190,6 +190,9 @@ function retakeQuizAction() {
   document.getElementById("startScreen").classList.remove("hidden");
   document.getElementById("startBtn").disabled = false;
   document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
-
+  // When explicitly clicking Retake:
+  sessionStorage.removeItem("quiz_review_active");
+  sessionStorage.removeItem("quiz_cached_responses");
+  
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
