@@ -282,6 +282,17 @@ if (adminBtn) {
     adminModal.classList.add("hidden");
   });
 
+  // Trigger login on Enter / mobile keyboard arrow (->)
+  if (adminPassInput) {
+    adminPassInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.keyCode === 13) {
+        e.preventDefault();
+        adminPassInput.blur(); // Dismisses mobile keyboard
+        if (submitAdminPassBtn) submitAdminPassBtn.click();
+      }
+    });
+  }
+
   submitAdminPassBtn.addEventListener("click", () => {
     if (!adminPassInput.value) {
       showToast("Please enter the PIN", "error");
