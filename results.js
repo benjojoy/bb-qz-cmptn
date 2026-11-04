@@ -1,61 +1,26 @@
 const SUBMIT_API_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
 
-function displayMobileError(err) {
-  let errBox = document.getElementById("mobileErrorBox");
-  if (!errBox) {
-    errBox = document.createElement("div");
-    errBox.id = "mobileErrorBox";
-    errBox.style.cssText = "position:fixed;top:10px;left:10px;right:10px;background:#fee2e2;color:#991b1b;border:2px solid #ef4444;padding:12px;border-radius:8px;font-size:12px;z-index:999999;word-break:break-all;font-family:monospace;box-shadow:0 4px 10px rgba(0,0,0,0.2);";
-    document.body.appendChild(errBox);
-  }
-  errBox.innerHTML = `<strong>⚠️ JS Error:</strong><br>${err.message || err}<br><br><small>${err.stack || ''}</small>`;
-}
-
-// Intercept unhandled promise/syntax rejections on mobile
-window.addEventListener("error", (e) => displayMobileError(e.error || e.message));
-window.addEventListener("unhandledrejection", (e) => displayMobileError(e.reason));
-
-
 // 1. Generate or retrieve a persistent Device ID for this browser
 function getOrCreateDeviceId() {
-  // 1. Maintain a persistent unique ID across tests on the same phone
   let uniqueId = localStorage.getItem("quiz_device_uid");
   if (!uniqueId) {
     uniqueId = "DEV-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-" + Date.now().toString(36).slice(-4).toUpperCase();
     localStorage.setItem("quiz_device_uid", uniqueId);
   }
 
-  // 2. Extract Device Model and OS
   let deviceModel = "Unknown Device";
-  let os = "Unknown OS";
-
-  if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-    try {
-      const hints = await navigator.userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]);
-      deviceModel = hints.model || hints.platform || "Desktop/Mobile";
-      os = `${hints.platform || ""} ${hints.platformVersion || ""}`.trim();
-    } catch (e) {
-      // Fallback if permission blocked
-    }
+  const ua = navigator.userAgent;
+  if (/iPhone/i.test(ua)) deviceModel = "Apple iPhone";
+  else if (/iPad/i.test(ua)) deviceModel = "Apple iPad";
+  else if (/Android/i.test(ua)) {
+    const match = ua.match(/Android\s([0-9.]+);?\s?([^;]+)\sBuild/i);
+    deviceModel = match && match[2] ? match[2].trim() : "Android Device";
+  } else if (/Windows/i.test(ua)) {
+    deviceModel = "Windows PC";
+  } else if (/Macintosh/i.test(ua)) {
+    deviceModel = "Mac";
   }
 
-  // Fallback for Safari/Firefox or older devices
-  if (deviceModel === "Unknown Device" || !deviceModel) {
-    const ua = navigator.userAgent;
-    if (/iPhone/i.test(ua)) deviceModel = "Apple iPhone";
-    else if (/iPad/i.test(ua)) deviceModel = "Apple iPad";
-    else if (/Android/i.test(ua)) {
-      const match = ua.match(/Android\s([0-9.]+);?\s?([^;]+)\sBuild/i);
-      deviceModel = match && match[2] ? match[2].trim() : "Android Device";
-      os = match && match[1] ? `Android ${match[1]}` : "Android";
-    } else if (/Windows/i.test(ua)) {
-      deviceModel = "Windows PC";
-    } else if (/Macintosh/i.test(ua)) {
-      deviceModel = "Mac";
-    }
-  }
-
-  // Format into a readable string for the sheet
   return `${deviceModel} (${uniqueId})`;
 }
 
@@ -70,14 +35,12 @@ async function fetchClientNetworkInfo() {
       location: [data.city, data.region, data.country_name].filter(Boolean).join(", ") || "Unknown"
     };
   } catch (err) {
-    // Fallback if user has an ad-blocker or offline
     return {
       ip: "Unavailable",
       location: "Unavailable"
     };
   }
 }
-
 
 function getBibleLink(bookName, ref) {
   if (!ref) return "";
@@ -100,7 +63,7 @@ function getBibleLink(bookName, ref) {
   };
 
   const cleanBook = String(bookName || "").trim().toUpperCase();
-  const code = bookCodes[cleanBook] || "2CO"; // defaults to current book context
+  const code = bookCodes[cleanBook] || "2CO";
 
   const refParts = ref.replace(/[^0-9:-]/g, "").split(":");
   const chapter = refParts[0] || "1";
@@ -109,12 +72,10 @@ function getBibleLink(bookName, ref) {
   if (currentLang === "en") {
     return `https://www.bible.com/bible/59/${code}.${chapter}.${verse}.ESV`;
   }
-
   return `https://www.bible.com/bible/1693/${code}.${chapter}.${verse}.MALOVBSI`;
 }
 
-async function showQuizResults(questions, userResponses, settings, colIndex) {
-  try {
+function showQuizResults(questions, userResponses, settings, colIndex) {
   const header = document.querySelector(".header");
   if (header) header.classList.add("hidden");
   document.getElementById("progressBar").style.width = "100%";
@@ -129,12 +90,11 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const accuracyStr = `${percent}%`;
 
-  // Fetch Device ID immediately (synchronous / local)
   const deviceId = getOrCreateDeviceId();
   const participantName = document.getElementById("nameInput").value.trim();
   const participantPhone = document.getElementById("phoneInput") ? document.getElementById("phoneInput").value.trim() : "";
 
-  // Background logging: fetch network details without blocking the UI
+  // Background logging using Promise .then (no invalid await)
   if (SUBMIT_API_URL) {
     fetchClientNetworkInfo().then(netInfo => {
       fetch(SUBMIT_API_URL, {
@@ -212,11 +172,9 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
     let correctDisplay = "";
 
     if (type === "TF") {
-      if (currentLang === "en") {
-        correctDisplay = ansKey === "A" ? "True" : "False";
-      } else {
-        correctDisplay = ansKey === "A" ? "ശരി" : "തെറ്റ്";
-      }
+      correctDisplay = currentLang === "en" 
+        ? (ansKey === "A" ? "True" : "False")
+        : (ansKey === "A" ? "ശരി" : "തെറ്റ്");
     } else {
       const keyMap = {
         "A": getLocalizedText(q, colIndex.optA, colIndex.optA_en),
@@ -268,9 +226,4 @@ async function showQuizResults(questions, userResponses, settings, colIndex) {
     `;
     review.appendChild(div);
   });
-  } catch (fatalErr) {
-    displayMobileError(fatalErr);
-  }
 }
-
-
