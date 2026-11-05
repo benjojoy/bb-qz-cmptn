@@ -39,7 +39,7 @@ function setupUserChapterMultiSelect(questionList, colIndex) {
   if (!container) return;
 
   // 1. Gather all unique chapters from the questions
-  const catCol = colIndex.category !== undefined ? colIndex.category : 3;
+  const catCol = colIndex.category !== undefined ? colIndex.category : 2;
   const chapterSet = new Set();
 
   questionList.forEach(q => {
@@ -208,7 +208,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
 
   // 4. Filter allRawQuestions by User Selected Chapters
   const selectedChapterNames = checkedBoxes.map(cb => cb.value.toLowerCase());
-  const catCol = colIndex.category !== undefined ? colIndex.category : 3;
+  const catCol = colIndex.category !== undefined ? colIndex.category : 2;
 
   let filteredPool = allRawQuestions.filter(q => {
     const chap = String(q[catCol] || "").trim().toLowerCase();
