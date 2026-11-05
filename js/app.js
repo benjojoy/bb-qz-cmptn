@@ -1,26 +1,27 @@
-let allRawQuestions = []; // Preserves the entire pool of questions
+// Global references accessible by quizEngine.js and admin.js
+window.allRawQuestions = [];
 
 async function initApp() {
   try {
-    const { settings, questions } = await loadQuizData();
-    window.allRawQuestions = [...questions]; // Attached to window so quizEngine.js can see it
+    const data = await loadQuizData();
+    settings = data.settings;
+    questions = data.questions;
+    
+    // Crucial: assign both local and window pool so chapter generator gets questions
+    window.allRawQuestions = [...questions];
 
     document.getElementById("quizTitle").innerText = settings["quiz title"] || "Bible Quiz";
     document.getElementById("quizDesc").innerText = "Answer all questions.\nEach question carries 1 point.\nNo negative marking.";
-    document.getElementById("progressText").innerText = `Total Questions: ${questions.length}`;
     document.getElementById("startBtn").disabled = false;
 
-    // Dynamically update label based on requirement setting
     const isPhoneRequired = String(settings["require phone"]).toUpperCase() === "TRUE";
     const phoneLabel = document.getElementById("phoneLabel");
     if (phoneLabel) {
-      phoneLabel.innerText = isPhoneRequired 
-        ? "WhatsApp Number *" 
-        : "WhatsApp Number (Optional)";
+      phoneLabel.innerText = isPhoneRequired ? "WhatsApp Number *" : "WhatsApp Number (Optional)";
     }
 
-    // Build the dynamic multi-select chapter checkboxes
-    setupUserChapterMultiSelect(allRawQuestions, colIndex);
+    // Build the dynamic multi-select chapter checkboxes with the populated pool
+    setupUserChapterMultiSelect(window.allRawQuestions);
 
   } catch (err) {
     document.getElementById("quizDesc").innerText = "Error loading quiz data: " + err.message;
@@ -29,53 +30,49 @@ async function initApp() {
 }
 
 // -------------------------------------------------------------
-// Dynamic Multi-Select Chapter Generator & Listeners
+// Dynamic Multi-Select Chapter Generator
 // -------------------------------------------------------------
-function setupUserChapterMultiSelect(questionList, colIndex) {
+function setupUserChapterMultiSelect(questionList) {
   const container = document.getElementById("userChapterCheckboxContainer");
   const selectAllCb = document.getElementById("userSelectAllChapters");
   const badge = document.getElementById("selectedChapBadge");
   const errorMsg = document.getElementById("chapSelectError");
   if (!container) return;
 
-  // 1. Gather all unique chapters from the questions
-  const catCol = colIndex.category !== undefined ? colIndex.category : 2;
-  const chapterSet = new Set();
+  // Category is Column C (index 2)
+  const catCol = (typeof colIndex !== "undefined" && colIndex.category !== undefined) ? colIndex.category : 2;
 
-  questionList.forEach(q => {
-    const chap = String(q[catCol] || "").trim();
+  // Extract distinct chapters
+  const chapterSet = new Set();
+  (questionList || []).forEach(q => {
+    const chap = String(q[catCol] || q[2] || "").trim();
     if (chap) chapterSet.add(chap);
   });
 
-  // Sort logically: Chapter 1, Chapter 2, ..., Chapter 10
   const sortedChapters = Array.from(chapterSet).sort((a, b) => {
     const numA = parseInt(a.replace(/[^0-9]/g, "")) || 0;
     const numB = parseInt(b.replace(/[^0-9]/g, "")) || 0;
     return numA - numB;
   });
 
-  // 2. Render checkbox items
   container.innerHTML = "";
   sortedChapters.forEach(chap => {
     const label = document.createElement("label");
     label.style.cssText = "display:flex; align-items:center; gap:6px; font-size:0.85rem; padding:4px 6px; background:#fff; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;";
     label.innerHTML = `
       <input type="checkbox" name="userSelectedChapter" value="${chap}" checked style="width:15px; height:15px; accent-color:#4f46e5;">
-      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${chap}</span>
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; color:#1e293b;">${chap}</span>
     `;
     container.appendChild(label);
   });
 
   const checkboxes = container.querySelectorAll('input[name="userSelectedChapter"]');
 
-  // Helper to sync badge, select all status, and question preview count
   function syncChapterSelection() {
     const checked = Array.from(checkboxes).filter(cb => cb.checked);
     const count = checked.length;
 
-    if (errorMsg) {
-      errorMsg.style.display = count === 0 ? "block" : "none";
-    }
+    if (errorMsg) errorMsg.style.display = count === 0 ? "block" : "none";
 
     if (count === checkboxes.length) {
       selectAllCb.checked = true;
@@ -91,72 +88,44 @@ function setupUserChapterMultiSelect(questionList, colIndex) {
       if (badge) badge.innerText = `${count} Selected`;
     }
 
-    // Update real-time total questions preview count
     const activeChaps = checked.map(cb => cb.value.toLowerCase());
-    const matchedCount = allRawQuestions.filter(q => {
-      const chap = String(q[catCol] || "").trim().toLowerCase();
+    const matched = (window.allRawQuestions || []).filter(q => {
+      const chap = String(q[catCol] || q[2] || "").trim().toLowerCase();
       return activeChaps.includes(chap);
-    }).length;
+    });
 
-    document.getElementById("progressText").innerText = `Total Questions: ${matchedCount}`;
+    const progressEl = document.getElementById("progressText");
+    if (progressEl) progressEl.innerText = `Total Questions: ${matched.length}`;
   }
 
-  // 3. Master 'Select All' handler
   if (selectAllCb) {
-    selectAllCb.addEventListener("change", () => {
+    selectAllCb.onchange = () => {
       checkboxes.forEach(cb => { cb.checked = selectAllCb.checked; });
       syncChapterSelection();
-    });
+    };
   }
 
-  // Individual checkbox click handlers
   checkboxes.forEach(cb => {
-    cb.addEventListener("change", syncChapterSelection);
+    cb.onchange = syncChapterSelection;
   });
 
   syncChapterSelection();
 }
 
 // -------------------------------------------------------------
-// 1. Dark Mode / Light Mode Toggle
-// -------------------------------------------------------------
-const themeToggleBtn = document.getElementById("themeToggleBtn");
-const savedTheme = localStorage.getItem("quiz_theme") || "light";
-
-if (savedTheme === "dark") {
-  document.body.classList.add("dark-mode");
-  if (themeToggleBtn) themeToggleBtn.innerText = "☀️";
-}
-
-if (themeToggleBtn) {
-  themeToggleBtn.addEventListener("click", () => {
-    const isDark = document.body.classList.toggle("dark-mode");
-    localStorage.setItem("quiz_theme", isDark ? "dark" : "light");
-    themeToggleBtn.innerText = isDark ? "☀️" : "🌙";
-  });
-}
-
-// -------------------------------------------------------------
-// 2. Validation Helpers
+// Validation & Quiz Start
 // -------------------------------------------------------------
 function validateName(name) {
-  // Allows English letters, Malayalam unicode script (\u0D00-\u0D7F), dots, and spaces. Min 2 characters.
-  const nameRegex = /^[A-Za-z\u0D00-\u0D7F\s.]{3,50}$/;
-  return nameRegex.test(name.trim());
+  return /^[A-Za-z\u0D00-\u0D7F\s.]{3,50}$/.test(name.trim());
 }
 
 function validatePhone(phone) {
-  // Cleans spaces, dashes, or +91 prefixes and checks for 10 consecutive digits
   const cleaned = phone.replace(/[\s\-\(\)\+]/g, "").replace(/^91/, "");
-  const phoneRegex = /^[6-9]\d{9}$/; // Standard Indian 10-digit mobile format
-  return phoneRegex.test(cleaned);
+  return /^[6-9]\d{9}$/.test(cleaned);
 }
 
-// -------------------------------------------------------------
-// 3. Start Quiz with Validation Check & Multi-Chapter Filter
-// -------------------------------------------------------------
 document.getElementById("startBtn").addEventListener("click", () => {
-  initAudio();
+  if (typeof initAudio === "function") initAudio();
 
   const nameInput = document.getElementById("nameInput");
   const phoneInput = document.getElementById("phoneInput");
@@ -170,7 +139,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
 
   let hasError = false;
 
-  // 1. Name Validation
+  // Name check
   if (!nameVal || !validateName(nameVal)) {
     nameError.style.display = "block";
     nameInput.style.borderColor = "#ef4444";
@@ -181,7 +150,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
     nameInput.style.borderColor = "";
   }
 
-  // 2. Phone Validation (runs if required OR if user entered text)
+  // Phone check
   if (isPhoneRequired || phoneVal.length > 0) {
     if (!validatePhone(phoneVal)) {
       phoneError.style.display = "block";
@@ -194,7 +163,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
     }
   }
 
-  // 3. Multi-Select Chapter Validation
+  // Chapter selection check
   const checkedBoxes = Array.from(document.querySelectorAll('input[name="userSelectedChapter"]:checked'));
   if (checkedBoxes.length === 0) {
     if (chapSelectError) chapSelectError.style.display = "block";
@@ -206,105 +175,85 @@ document.getElementById("startBtn").addEventListener("click", () => {
 
   if (hasError) return;
 
-  // 4. Filter allRawQuestions by User Selected Chapters
-  const selectedChapterNames = checkedBoxes.map(cb => cb.value.toLowerCase());
-  const catCol = colIndex.category !== undefined ? colIndex.category : 2;
+  // Filter questions by user selection
+  const selectedChapters = checkedBoxes.map(cb => cb.value.toLowerCase());
+  const catCol = (typeof colIndex !== "undefined" && colIndex.category !== undefined) ? colIndex.category : 2;
 
-  let filteredPool = allRawQuestions.filter(q => {
-    const chap = String(q[catCol] || "").trim().toLowerCase();
-    return selectedChapterNames.includes(chap);
+  let filteredPool = (window.allRawQuestions || []).filter(q => {
+    const chap = String(q[catCol] || q[2] || "").trim().toLowerCase();
+    return selectedChapters.includes(chap);
   });
 
-  // 5. Apply Shuffle if enabled in Admin Settings
   if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
     shuffle(filteredPool);
   }
 
-  // 6. Cap Question Count if a limit is configured in Admin Settings
   const maxLimit = Number(settings["number of questions"]) || 0;
   if (maxLimit > 0 && filteredPool.length > maxLimit) {
     filteredPool = filteredPool.slice(0, maxLimit);
   }
 
-  // Assign the filtered question pool to global questions for quizEngine
   questions = filteredPool;
 
-  // 7. Lock selected language
   const langDropdown = document.getElementById("langSelect");
   if (langDropdown) {
-    currentLang = langDropdown.value; // 'ml' or 'en'
+    currentLang = langDropdown.value;
     localStorage.setItem("quiz_lang", currentLang);
   }
 
-  // 8. Hide Admin Lock Icon during the active quiz attempt
   const adminBtn = document.getElementById("adminBtn");
-  if (adminBtn) {
-    adminBtn.classList.add("hidden");
-  }
+  if (adminBtn) adminBtn.classList.add("hidden");
 
-  // 9. Transition screens
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
 
   startQuizEngine();
 });
 
-// 2. Next / Submit Click
+// Navigation & Actions
 document.getElementById("nextBtn").addEventListener("click", handleNextOrSubmit);
 
-// 3. Retake Click
 const retakeBtn = document.getElementById("retakeBtn");
-if (retakeBtn) {
-  retakeBtn.addEventListener("click", retakeQuizAction);
-}
+if (retakeBtn) retakeBtn.addEventListener("click", retakeQuizAction);
 
-// 4. Refresh Quiz Handler
 const refreshBtn = document.getElementById("refreshBtn");
-if (refreshBtn) {
-  refreshBtn.addEventListener("click", () => {
-    window.location.reload();
-  });
-}
+if (refreshBtn) refreshBtn.addEventListener("click", () => window.location.reload());
 
-// 5. Generate & Download Review as PDF
+// PDF Download
 const downloadPdfBtn = document.getElementById("downloadPdfBtn");
 if (downloadPdfBtn) {
   downloadPdfBtn.addEventListener("click", () => {
     const element = document.getElementById("resultScreen");
     const name = document.getElementById("nameInput").value.trim() || "Participant";
-
-    // Hide buttons temporarily during PDF capture
     const buttons = element.querySelectorAll("button");
     buttons.forEach(b => b.style.display = "none");
 
     const opt = {
-      margin:       10,
-      filename:     `Bible_Quiz_Review_${name.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Prevents cutting through text/cards
+      margin: 10,
+      filename: `Bible_Quiz_Review_${name.replace(/\s+/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     html2pdf().set(opt).from(element).save().then(() => {
-      // Restore buttons after PDF is created
       buttons.forEach(b => b.style.display = "");
     });
   });
 }
 
-// 6. Pre-fill WhatsApp with Score & Detailed Review Breakdown
+// WhatsApp Share
 const shareWhatsAppBtn = document.getElementById("shareWhatsAppBtn");
 if (shareWhatsAppBtn) {
   shareWhatsAppBtn.addEventListener("click", () => {
     const name = document.getElementById("nameInput").value.trim();
-    const phone = document.getElementById("phoneInput").value.replace(/[^0-9]/g, ""); // strip non-digits
+    const phone = document.getElementById("phoneInput").value.replace(/[^0-9]/g, "");
     const scoreText = document.getElementById("scoreValue").innerText;
     const percentText = document.getElementById("scorePercent").innerText;
     const quizTitle = document.getElementById("quizTitle").innerText;
 
-    // Header Summary
-    let msg = `📖 *${quizTitle} - Result*\n\n` +
+    let msg = `📖 *${quizTitle} Result*\n\n` +
               `👤 *Participant:* ${name}\n` +
               `🎯 *Score:* ${scoreText} (${percentText})\n\n` +
               `*Review Answers:*\n\n`;
@@ -314,16 +263,13 @@ if (shareWhatsAppBtn) {
       const isCorrect = res ? res.isCorrect : false;
       const notAnsweredText = currentLang === "en" ? "Not Answered" : "രേഖപ്പെടുത്തിയിട്ടില്ല";
       const userAns = res && res.selected ? res.selected : notAnsweredText;
-      const icon = isCorrect ? "✅" : "❌";
 
       const type = String(q[colIndex.type] || "MCQ").trim().toUpperCase();
       const ansKey = String(q[colIndex.answer] || "").trim().toUpperCase();
       let correctDisplay = "";
 
       if (type === "TF") {
-        correctDisplay = currentLang === "en" 
-          ? (ansKey === "A" ? "True" : "False") 
-          : (ansKey === "A" ? "ശരി" : "തെറ്റ്");
+        correctDisplay = currentLang === "en" ? (ansKey === "A" ? "True" : "False") : (ansKey === "A" ? "ശരി" : "തെറ്റ്");
       } else {
         const keyMap = {
           "A": getLocalizedText(q, colIndex.optA, colIndex.optA_en),
@@ -338,57 +284,50 @@ if (shareWhatsAppBtn) {
       const ref = (res && res.reference) ? res.reference : (q[colIndex.ref] || "");
       const exp = getLocalizedText(q, colIndex.exp, colIndex.exp_en);
 
-      msg += `${i + 1}. ${qText}\n`;
-      msg += `Your Answer: ${userAns} ${icon}\n`;
-      if (!isCorrect) {
-        msg += `Correct Answer: ${correctDisplay}\n`;
-      }
-      if (ref) {
-        msg += `📖 Reference: ${ref}\n`;
-      }
-      if (exp) {
-        msg += `💡 Explanation: ${exp}\n`;
-      }
+      msg += `${i + 1}. ${qText}\nYour Answer: ${userAns} ${isCorrect ? '✅' : '❌'}\n`;
+      if (!isCorrect) msg += `Correct Answer: ${correctDisplay}\n`;
+      if (ref) msg += `📖 Reference: ${ref}\n`;
+      if (exp) msg += `💡 Explanation: ${exp}\n`;
       msg += `\n`;
     });
 
     const encodedMsg = encodeURIComponent(msg.trim());
-
-    if (phone.length >= 10) {
-      const formattedPhone = phone.length === 10 ? `91${phone}` : phone;
-      window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMsg}`, "_blank");
-    } else {
-      window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
-    }
+    const targetPhone = phone.length === 10 ? `91${phone}` : phone;
+    const url = targetPhone ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`;
+    window.open(url, "_blank");
   });
 }
 
-// -------------------------------------------------------------
-// 1. Mute Toggle Wiring
-// -------------------------------------------------------------
+// Appearance & Utility Handlers
+const themeToggleBtn = document.getElementById("themeToggleBtn");
+if (localStorage.getItem("quiz_theme") === "dark") {
+  document.body.classList.add("dark-mode");
+  if (themeToggleBtn) themeToggleBtn.innerText = "☀️";
+}
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener("click", () => {
+    const isDark = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("quiz_theme", isDark ? "dark" : "light");
+    themeToggleBtn.innerText = isDark ? "☀️" : "🌙";
+  });
+}
+
 const muteBtn = document.getElementById("muteBtn");
-if (muteBtn) {
+if (muteBtn && typeof getMuteState === "function") {
   muteBtn.innerText = getMuteState() ? "🔇" : "🔊";
   muteBtn.addEventListener("click", () => {
-    const muted = toggleMute();
-    muteBtn.innerText = muted ? "🔇" : "🔊";
+    muteBtn.innerText = toggleMute() ? "🔇" : "🔊";
   });
 }
 
-// -------------------------------------------------------------
-// 2. Malayalam Font Size Toggle (A+ / A-)
-// -------------------------------------------------------------
 let currentFontSize = parseInt(localStorage.getItem("quiz_font_size")) || 100;
 function applyFontSize(sizePercent) {
   currentFontSize = Math.min(Math.max(sizePercent, 85), 135);
   localStorage.setItem("quiz_font_size", currentFontSize);
-  
-  // Scales question titles, options and descriptions
   document.querySelectorAll(".question-title, .option-btn, .review-item, p.desc").forEach(el => {
     el.style.fontSize = `${(currentFontSize / 100) * 1.05}rem`;
   });
 }
-
 const fontDecBtn = document.getElementById("fontDecBtn");
 const fontIncBtn = document.getElementById("fontIncBtn");
 if (fontDecBtn && fontIncBtn) {
@@ -396,230 +335,17 @@ if (fontDecBtn && fontIncBtn) {
   fontIncBtn.addEventListener("click", () => applyFontSize(currentFontSize + 10));
 }
 
-// -------------------------------------------------------------
-// 3. Passcode Protected Admin Dashboard
-// -------------------------------------------------------------
-const ADMIN_PIN = "4753"; // Set your desired 4-digit admin PIN
-const adminBtn = document.getElementById("adminBtn");
-const adminModal = document.getElementById("adminModal");
-const closeAdminBtn = document.getElementById("closeAdminBtn");
-const submitAdminPassBtn = document.getElementById("submitAdminPassBtn");
-const adminPassInput = document.getElementById("adminPassInput");
-const adminAuthScreen = document.getElementById("adminAuthScreen");
-const adminDataScreen = document.getElementById("adminDataScreen");
-const refreshAdminBtn = document.getElementById("refreshAdminBtn");
-
-if (adminBtn) {
-  adminBtn.addEventListener("click", () => {
-    adminModal.classList.remove("hidden");
-  });
-  closeAdminBtn.addEventListener("click", () => {
-    adminModal.classList.add("hidden");
-  });
-
-  // Trigger login on Enter / mobile keyboard arrow (->)
-  if (adminPassInput) {
-    adminPassInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.keyCode === 13) {
-        e.preventDefault();
-        adminPassInput.blur(); // Dismisses mobile keyboard
-        if (submitAdminPassBtn) submitAdminPassBtn.click();
-      }
-    });
-  }
-
-  submitAdminPassBtn.addEventListener("click", () => {
-    if (!adminPassInput.value) {
-      showToast("Please enter the PIN", "error");
-      adminPassInput.focus();
-      return;
-    }
-  
-    if (adminPassInput.value === ADMIN_PIN) {
-      adminAuthScreen.classList.add("hidden");
-      adminDataScreen.classList.remove("hidden");
-      adminPassInput.value = "";
-      loadAdminMetrics();
-      populateAdminSettingsForm();
-    } else {
-      showToast("Incorrect PIN! Please try again.", "error");
-      adminPassInput.value = "";
-      adminPassInput.focus();
-    }
-  });
-
-  if (refreshAdminBtn) {
-    refreshAdminBtn.addEventListener("click", loadAdminMetrics);
-  }
-}
-
-async function loadAdminMetrics() {
-  document.getElementById("admTotalAttempts").innerText = "...";
-  document.getElementById("admAvgScore").innerText = "...";
-  document.getElementById("admTopPerformers").innerHTML = "Loading...";
-
-  try {
-    const responses = await fetchSheetData("Responses");
-    if (!responses || responses.length <= 1) {
-      document.getElementById("admTotalAttempts").innerText = "0";
-      document.getElementById("admAvgScore").innerText = "0%";
-      document.getElementById("admTopPerformers").innerHTML = "No responses recorded yet.";
-      return;
-    }
-
-    const rows = responses.slice(1); // skip header
-    const total = rows.length;
-    let totalScore = 0;
-    let totalPossible = 0;
-
-    // Header index expectations: 0: Timestamp, 1: Name, 2: Phone, 3: Score, 4: Total
-    let leaderboard = [];
-
-    rows.forEach(r => {
-      const name = r[1] || "Anonymous";
-      const score = Number(r[3]) || 0;
-      const possible = Number(r[4]) || 5;
-      totalScore += score;
-      totalPossible += possible;
-      leaderboard.push({ name, score, possible, percent: Math.round((score / possible) * 100) });
-    });
-
-    const avg = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
-    document.getElementById("admTotalAttempts").innerText = total;
-    document.getElementById("admAvgScore").innerText = `${avg}%`;
-
-    // Top 5 performers sorted by score descending
-    leaderboard.sort((a, b) => b.score - a.score || b.percent - a.percent);
-    const top5 = leaderboard.slice(0, 5);
-
-    let html = "<ol style='padding-left: 20px; margin: 0;'>";
-    top5.forEach(p => {
-      html += `<li style='margin-bottom: 6px;'><strong>${p.name}</strong> — ${p.score}/${p.possible} (${p.percent}%)</li>`;
-    });
-    html += "</ol>";
-
-    document.getElementById("admTopPerformers").innerHTML = html;
-  } catch (err) {
-    document.getElementById("admTopPerformers").innerHTML = `<span style="color:red">Failed to read Responses tab: ${err.message}</span>`;
-  }
-}
-
-function populateAdminSettingsForm() {
-  if (!settings) return;
-
-  document.getElementById("admSetTitle").value = settings["quiz title"] || "";
-  
-  const bookSelect = document.getElementById("admSetBook");
-  if (bookSelect && settings["book filter"]) {
-    bookSelect.value = settings["book filter"].trim();
-  }
-
-  const rawCategory = String(settings["category filter"] || "").trim();
-  const selectedChapters = rawCategory.toLowerCase() === "all" || !rawCategory
-    ? ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"] // Check all if "All" or empty
-    : rawCategory.split(",").map(c => c.trim().toLowerCase());
-
-  document.querySelectorAll('input[name="chapterFilter"]').forEach(cb => {
-    if (rawCategory.toLowerCase() === "all" || !rawCategory) {
-      cb.checked = true;
-    } else {
-      cb.checked = selectedChapters.includes(cb.value.toLowerCase());
-    }
-  });
-
-  document.getElementById("admSetDuration").value = settings["quiz duration minutes"] || 3;
-  document.getElementById("admSetEasy").value = settings["easy count"] || 0;
-  document.getElementById("admSetMedium").value = settings["medium count"] || 0;
-  document.getElementById("admSetHard").value = settings["hard count"] || 0;
-  document.getElementById("admSetShuffleQ").checked = String(settings["shuffle questions"]).toUpperCase() === "TRUE";
-  document.getElementById("admSetShuffleOpt").checked = String(settings["shuffle options"]).toUpperCase() === "TRUE";
-  document.getElementById("admSetReqPhone").checked = String(settings["require phone"]).toUpperCase() === "TRUE";
-  document.getElementById("admSetProgressBar").checked = String(settings["show progress bar"]).toUpperCase() === "TRUE";
-}
-
-// Handle saving updated settings back to Google Sheets
-const adminSettingsForm = document.getElementById("adminSettingsForm");
-if (adminSettingsForm) {
-  adminSettingsForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const saveBtn = document.getElementById("saveSettingsBtn");
-    saveBtn.disabled = true;
-    saveBtn.innerText = "Saving to Google Sheet...";
-
-    // Collect checked chapters
-    const checkedBoxes = Array.from(document.querySelectorAll('input[name="chapterFilter"]:checked'));
-    let categoryValue = "";
-    if (checkedBoxes.length === 0 || checkedBoxes.length === 13) {
-      // If all or none selected, set to All
-      categoryValue = "All";
-    } else {
-      // Join as comma-separated: e.g. "Chapter 1, Chapter 2"
-      categoryValue = checkedBoxes.map(cb => cb.value).join(", ");
-    }
-
-    const updated = {
-      "Quiz Title": document.getElementById("admSetTitle").value.trim(),
-      "Book Filter": document.getElementById("admSetBook").value.trim(),
-      "Category Filter": categoryValue,
-      "Quiz Duration Minutes": document.getElementById("admSetDuration").value,
-      "Easy Count": document.getElementById("admSetEasy").value,
-      "Medium Count": document.getElementById("admSetMedium").value,
-      "Hard Count": document.getElementById("admSetHard").value,
-      "Number of Questions": (
-        Number(document.getElementById("admSetEasy").value) +
-        Number(document.getElementById("admSetMedium").value) +
-        Number(document.getElementById("admSetHard").value)
-      ),
-      "Shuffle Questions": document.getElementById("admSetShuffleQ").checked ? "TRUE" : "FALSE",
-      "Shuffle Options": document.getElementById("admSetShuffleOpt").checked ? "TRUE" : "FALSE",
-      "Require Phone": document.getElementById("admSetReqPhone").checked ? "TRUE" : "FALSE",
-      "Show Progress Bar": document.getElementById("admSetProgressBar").checked ? "TRUE" : "FALSE"
-    };
-
-    try {
-      // POST the updated settings to your Apps Script Web App URL
-      const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIFuKTOW-CC9dhuxRGMXNuVE2L3aRzteu4FAhRBPBt6H0VMWISeUq83fh5LXd26vr3Rw/exec";
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors", // Standard for Google Apps Script Web App endpoints
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "updateSettings",
-          settings: updated
-        })
-      });
-
-      showToast("Saved successfully! Reloading to apply changes.", "success");
-      setTimeout(() => {
-        window.location.reload();
-      }, 1200);
-    } catch (err) {
-      showToast("Error saving settings: " + err.message, "error");
-      saveBtn.disabled = false;
-      saveBtn.innerText = "💾 Save Settings to Google Sheet";
-    }
-  });
-}
-
 let toastTimeout = null;
 function showToast(message, type = "error") {
   const toast = document.getElementById("toastNotification");
   if (!toast) return;
-
-  // Clear previous timer if called rapidly
   if (toastTimeout) clearTimeout(toastTimeout);
 
-  const icon = type === "success" ? "✅" : "⚠️";
-  toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+  toast.innerHTML = `<span>${type === "success" ? "✅" : "⚠️"}</span> <span>${message}</span>`;
   toast.className = `toast ${type}`;
-
-  // Make visible
   toast.classList.remove("hidden");
-
-  // Auto-dismiss after 3.2 seconds
-  toastTimeout = setTimeout(() => {
-    toast.classList.add("hidden");
-  }, 3200);
+  toastTimeout = setTimeout(() => toast.classList.add("hidden"), 3200);
 }
 
+// Kick off App
 initApp();
