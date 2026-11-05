@@ -193,6 +193,13 @@ function retakeQuizAction() {
   // When explicitly clicking Retake:
   sessionStorage.removeItem("quiz_review_active");
   sessionStorage.removeItem("quiz_cached_responses");
+
+// Re-sync the question count label based on whatever chapters remain checked
+  const checkedBoxes = Array.from(document.querySelectorAll('input[name="userSelectedChapter"]:checked'));
+  const catCol = (colIndex && colIndex.category !== undefined) ? colIndex.category : 2;
+  const activeChaps = checkedBoxes.map(cb => cb.value.toLowerCase());
+  const pool = window.allRawQuestions || questions || [];
+  const matched = pool.filter(q => activeChaps.includes(String(q[catCol] || "").trim().toLowerCase()));
   
   window.scrollTo({ top: 0, behavior: "smooth" });
 }

@@ -82,13 +82,6 @@ async function loadQuizData() {
   });
 
   const targetBook = (settings["book filter"] || settings["book"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
-  const targetDifficulty = (settings["difficulty filter"] || settings["difficulty"] || "ALL").replace(/\s+/g, " ").trim().toUpperCase();
-
-  // Parse comma-separated Category/Chapter filter
-  const rawCatFilter = String(settings["category filter"] || settings["category"] || "ALL").trim().toLowerCase();
-  const allowedCategories = (rawCatFilter && rawCatFilter !== "all")
-    ? rawCatFilter.split(",").map(c => c.trim().toLowerCase()).filter(Boolean)
-    : [];
 
   // Map column headers
   const headerRow = (rawQuestions[0] || []).map(c => String(c || "").trim().toLowerCase());
@@ -119,70 +112,17 @@ async function loadQuizData() {
 
   let pool = rawQuestions.slice(1).filter(r => r && r[colIndex.question] && String(r[colIndex.question]).trim() !== "");
 
-  // Apply Book filter
+  // Apply Book filter only (Chapter filtering now happens in app.js per user choice)
   if (targetBook !== "ALL" && targetBook !== "") {
     pool = pool.filter(r => String(r[colIndex.book] || "").replace(/\s+/g, " ").trim().toUpperCase() === targetBook);
   }
 
-  // Apply Multi-Chapter / Category filter
-  if (allowedCategories.length > 0) {
-    pool = pool.filter(r => {
-      const qCategory = String(r[colIndex.category] || "").trim().toLowerCase();
-      if (!qCategory) return false;
-      return allowedCategories.some(cat => qCategory.includes(cat) || cat.includes(qCategory));
-    });
-  }
-
-  // Apply Difficulty filter
-  if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
-    pool = pool.filter(r => String(r[colIndex.diff] || "").replace(/\s+/g, " ").trim().toUpperCase() === targetDifficulty);
-  }
-
   if (pool.length === 0) {
-    throw new Error("No questions found matching the chosen filters.");
+    throw new Error("No questions found matching the chosen book filter.");
   }
 
-  // Question Selection
-  let selected = [];
-  const easyCount = Number(settings["easy count"]) || 0;
-  const mediumCount = Number(settings["medium count"]) || 0;
-  const hardCount = Number(settings["hard count"]) || 0;
-  let targetTotal = Number(settings["number of questions"]) || (easyCount + mediumCount + hardCount);
-  if (targetTotal <= 0) targetTotal = pool.length;
-
-  if (targetDifficulty !== "ALL" && targetDifficulty !== "") {
-    shuffle(pool);
-    selected = pool.slice(0, Math.min(targetTotal, pool.length));
-  } else {
-    let easy = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "EASY");
-    let med = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "MEDIUM");
-    let hard = pool.filter(r => String(r[colIndex.diff] || "").trim().toUpperCase() === "HARD");
-
-    shuffle(easy);
-    shuffle(med);
-    shuffle(hard);
-
-    selected = [
-      ...easy.slice(0, easyCount),
-      ...med.slice(0, mediumCount),
-      ...hard.slice(0, hardCount)
-    ];
-
-    targetTotal = Math.min(targetTotal, pool.length);
-    if (selected.length < targetTotal) {
-      const pickedSet = new Set(selected);
-      let remaining = pool.filter(r => !pickedSet.has(r));
-      shuffle(remaining);
-      selected = selected.concat(remaining.slice(0, targetTotal - selected.length));
-    }
-  }
-
-  questions = selected;
-  if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
-    shuffle(questions);
-  }
-
-  return { settings, questions, colIndex };
+  questions = pool;
+  return { settings, questions: pool, colIndex };
 }
 
 function shuffle(arr) {

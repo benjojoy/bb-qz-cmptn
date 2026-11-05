@@ -1,7 +1,9 @@
-// App Entry & Event Wiring
+let allRawQuestions = []; // Preserves the entire pool of questions
+
 async function initApp() {
   try {
     const { settings, questions } = await loadQuizData();
+    window.allRawQuestions = [...questions]; // Attached to window so quizEngine.js can see it
 
     document.getElementById("quizTitle").innerText = settings["quiz title"] || "Bible Quiz";
     document.getElementById("quizDesc").innerText = "Answer all questions.\nEach question carries 1 point.\nNo negative marking.";
@@ -16,10 +18,103 @@ async function initApp() {
         ? "WhatsApp Number *" 
         : "WhatsApp Number (Optional)";
     }
+
+    // Build the dynamic multi-select chapter checkboxes
+    setupUserChapterMultiSelect(allRawQuestions, colIndex);
+
   } catch (err) {
     document.getElementById("quizDesc").innerText = "Error loading quiz data: " + err.message;
     console.error(err);
   }
+}
+
+// -------------------------------------------------------------
+// Dynamic Multi-Select Chapter Generator & Listeners
+// -------------------------------------------------------------
+function setupUserChapterMultiSelect(questionList, colIndex) {
+  const container = document.getElementById("userChapterCheckboxContainer");
+  const selectAllCb = document.getElementById("userSelectAllChapters");
+  const badge = document.getElementById("selectedChapBadge");
+  const errorMsg = document.getElementById("chapSelectError");
+  if (!container) return;
+
+  // 1. Gather all unique chapters from the questions
+  const catCol = colIndex.category !== undefined ? colIndex.category : 3;
+  const chapterSet = new Set();
+
+  questionList.forEach(q => {
+    const chap = String(q[catCol] || "").trim();
+    if (chap) chapterSet.add(chap);
+  });
+
+  // Sort logically: Chapter 1, Chapter 2, ..., Chapter 10
+  const sortedChapters = Array.from(chapterSet).sort((a, b) => {
+    const numA = parseInt(a.replace(/[^0-9]/g, "")) || 0;
+    const numB = parseInt(b.replace(/[^0-9]/g, "")) || 0;
+    return numA - numB;
+  });
+
+  // 2. Render checkbox items
+  container.innerHTML = "";
+  sortedChapters.forEach(chap => {
+    const label = document.createElement("label");
+    label.style.cssText = "display:flex; align-items:center; gap:6px; font-size:0.85rem; padding:4px 6px; background:#fff; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;";
+    label.innerHTML = `
+      <input type="checkbox" name="userSelectedChapter" value="${chap}" checked style="width:15px; height:15px; accent-color:#4f46e5;">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${chap}</span>
+    `;
+    container.appendChild(label);
+  });
+
+  const checkboxes = container.querySelectorAll('input[name="userSelectedChapter"]');
+
+  // Helper to sync badge, select all status, and question preview count
+  function syncChapterSelection() {
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const count = checked.length;
+
+    if (errorMsg) {
+      errorMsg.style.display = count === 0 ? "block" : "none";
+    }
+
+    if (count === checkboxes.length) {
+      selectAllCb.checked = true;
+      selectAllCb.indeterminate = false;
+      if (badge) badge.innerText = "All Selected";
+    } else if (count === 0) {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = false;
+      if (badge) badge.innerText = "0 Selected";
+    } else {
+      selectAllCb.checked = false;
+      selectAllCb.indeterminate = true;
+      if (badge) badge.innerText = `${count} Selected`;
+    }
+
+    // Update real-time total questions preview count
+    const activeChaps = checked.map(cb => cb.value.toLowerCase());
+    const matchedCount = allRawQuestions.filter(q => {
+      const chap = String(q[catCol] || "").trim().toLowerCase();
+      return activeChaps.includes(chap);
+    }).length;
+
+    document.getElementById("progressText").innerText = `Total Questions: ${matchedCount}`;
+  }
+
+  // 3. Master 'Select All' handler
+  if (selectAllCb) {
+    selectAllCb.addEventListener("change", () => {
+      checkboxes.forEach(cb => { cb.checked = selectAllCb.checked; });
+      syncChapterSelection();
+    });
+  }
+
+  // Individual checkbox click handlers
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", syncChapterSelection);
+  });
+
+  syncChapterSelection();
 }
 
 // -------------------------------------------------------------
@@ -58,7 +153,7 @@ function validatePhone(phone) {
 }
 
 // -------------------------------------------------------------
-// 3. Start Quiz with Validation Check
+// 3. Start Quiz with Validation Check & Multi-Chapter Filter
 // -------------------------------------------------------------
 document.getElementById("startBtn").addEventListener("click", () => {
   initAudio();
@@ -67,6 +162,7 @@ document.getElementById("startBtn").addEventListener("click", () => {
   const phoneInput = document.getElementById("phoneInput");
   const nameError = document.getElementById("nameError");
   const phoneError = document.getElementById("phoneError");
+  const chapSelectError = document.getElementById("chapSelectError");
 
   const nameVal = nameInput.value.trim();
   const phoneVal = phoneInput.value.trim();
@@ -74,40 +170,79 @@ document.getElementById("startBtn").addEventListener("click", () => {
 
   let hasError = false;
 
-  // Name Validation
+  // 1. Name Validation
   if (!nameVal || !validateName(nameVal)) {
     nameError.style.display = "block";
     nameInput.style.borderColor = "#ef4444";
     nameInput.focus();
     hasError = true;
+  } else {
+    nameError.style.display = "none";
+    nameInput.style.borderColor = "";
   }
 
-  // Phone Validation (runs if required OR if user typed something in optional mode)
+  // 2. Phone Validation (runs if required OR if user entered text)
   if (isPhoneRequired || phoneVal.length > 0) {
     if (!validatePhone(phoneVal)) {
       phoneError.style.display = "block";
       phoneInput.style.borderColor = "#ef4444";
       if (!hasError) phoneInput.focus();
       hasError = true;
+    } else {
+      phoneError.style.display = "none";
+      phoneInput.style.borderColor = "";
     }
+  }
+
+  // 3. Multi-Select Chapter Validation
+  const checkedBoxes = Array.from(document.querySelectorAll('input[name="userSelectedChapter"]:checked'));
+  if (checkedBoxes.length === 0) {
+    if (chapSelectError) chapSelectError.style.display = "block";
+    showToast("Please select at least one chapter!", "error");
+    hasError = true;
+  } else {
+    if (chapSelectError) chapSelectError.style.display = "none";
   }
 
   if (hasError) return;
 
-  // Lock selected language for the duration of this quiz attempt
+  // 4. Filter allRawQuestions by User Selected Chapters
+  const selectedChapterNames = checkedBoxes.map(cb => cb.value.toLowerCase());
+  const catCol = colIndex.category !== undefined ? colIndex.category : 3;
+
+  let filteredPool = allRawQuestions.filter(q => {
+    const chap = String(q[catCol] || "").trim().toLowerCase();
+    return selectedChapterNames.includes(chap);
+  });
+
+  // 5. Apply Shuffle if enabled in Admin Settings
+  if (String(settings["shuffle questions"]).toUpperCase() === "TRUE") {
+    shuffle(filteredPool);
+  }
+
+  // 6. Cap Question Count if a limit is configured in Admin Settings
+  const maxLimit = Number(settings["number of questions"]) || 0;
+  if (maxLimit > 0 && filteredPool.length > maxLimit) {
+    filteredPool = filteredPool.slice(0, maxLimit);
+  }
+
+  // Assign the filtered question pool to global questions for quizEngine
+  questions = filteredPool;
+
+  // 7. Lock selected language
   const langDropdown = document.getElementById("langSelect");
   if (langDropdown) {
     currentLang = langDropdown.value; // 'ml' or 'en'
     localStorage.setItem("quiz_lang", currentLang);
   }
 
-  // 1. Hide the Admin Lock Icon during the quiz
+  // 8. Hide Admin Lock Icon during the active quiz attempt
   const adminBtn = document.getElementById("adminBtn");
   if (adminBtn) {
     adminBtn.classList.add("hidden");
   }
 
-  // 2. Transition screens
+  // 9. Transition screens
   document.getElementById("startScreen").classList.add("hidden");
   document.getElementById("quizScreen").classList.remove("hidden");
 
