@@ -121,13 +121,25 @@ function populateAdminSettingsForm() {
   }
 
   const rawCategory = String(settings["category filter"] || "").trim();
-  const selectedChapters = rawCategory.toLowerCase() === "all" || !rawCategory
-    ? ["Chapter 1", "Chapter 2", "Chapter 3", "Chapter 4"]
-    : rawCategory.split(",").map(c => c.trim().toLowerCase());
+  const isAll = rawCategory.toLowerCase() === "all" || !rawCategory;
+  const selectedChapters = isAll ? [] : rawCategory.split(",").map(c => c.trim().toLowerCase());
 
-  document.querySelectorAll('input[name="chapterFilter"]').forEach(cb => {
-    cb.checked = (rawCategory.toLowerCase() === "all" || !rawCategory) ? true : selectedChapters.includes(cb.value.toLowerCase());
-  });
+  // Dynamically generate the 13 chapter checkboxes
+  const filterGroup = document.getElementById("chapterFilterGroup");
+  if (filterGroup) {
+    filterGroup.innerHTML = "";
+    for (let i = 1; i <= 13; i++) {
+      const name = `Chapter ${i}`;
+      const isChecked = isAll || selectedChapters.includes(name.toLowerCase());
+      const label = document.createElement("label");
+      label.className = "toggle-chip";
+      label.innerHTML = `
+        <input type="checkbox" name="chapterFilter" value="${name}" ${isChecked ? "checked" : ""}>
+        <span>${name}</span>
+      `;
+      filterGroup.appendChild(label);
+    }
+  }
 
   document.getElementById("admSetDuration").value = settings["quiz duration minutes"] || 3;
   document.getElementById("admSetEasy").value = settings["easy count"] || 0;
